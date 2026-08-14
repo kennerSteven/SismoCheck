@@ -43,7 +43,11 @@ export const PDFDocument = React.forwardRef(({
       
       {/* ================= MAIN CONTENT ================= */}
       <div className="p-8 box-border relative flex flex-col gap-1">
-        
+        {/* LOGO SUPERIOR */}
+        <div className="flex items-center justify-center mb-4 pdf-block">
+          <img src="/morar.ok.png" alt="Morar OK" className="w-full max-w-[200px] object-contain drop-shadow-sm" />
+        </div>
+
         {/* HEADER MODERNO */}
         <div className="flex items-center justify-between bg-white rounded-2xl p-6 border border-slate-200 shadow-sm mb-6 pdf-block">
           <div className="flex gap-6 items-center">

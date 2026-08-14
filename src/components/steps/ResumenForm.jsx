@@ -3,6 +3,10 @@ import { toJpeg } from 'html-to-image';
 import jsPDF from 'jspdf';
 import useFormStore from '../../store/useFormStore';
 import { Toast } from '../../utils/alerts';
+import { db, storage } from '../../lib/firebase';
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { doc, updateDoc, arrayUnion } from 'firebase/firestore';
+import CryptoJS from 'crypto-js';
 import { calcularValoracion, clasificarFisura, AMARILLO, NARANJA, ROJO, getColorStyles, getRecomendacionFisura, getFisuraLabel } from '../../engine/riskEngine';
 import CustomButton from '../ui/CustomButton';
 import FormHeader from '../layout/FormHeader';
@@ -72,7 +76,7 @@ const renderPasos = (val) => {
 };
 
 export default function ResumenForm() {
-  const { formData, setFooterHidden, prevStep, resetDiagnostico } = useFormStore();
+  const { formData, user, setFooterHidden, prevStep, resetDiagnostico } = useFormStore();
   const contentRef = useRef(null);
   const pdfRef = useRef(null);
   const [isGenerating, setIsGenerating] = useState(false);
@@ -132,10 +136,33 @@ export default function ResumenForm() {
         currentY += scaledHeight + (4 * scale); 
       }
 
+      // 2. Guardar el archivo localmente
       pdf.save('SismoCheck_Dictamen.pdf');
+
+      /* ======== DESHABILITADO TEMPORALMENTE ========
+      // 3. Subir a Firebase Storage
+      const blob = pdf.output('blob');
+      const timestamp = new Date().getTime();
+      const hashCC = CryptoJS.SHA256(user.documento.trim()).toString(CryptoJS.enc.Hex);
+      const fileName = `dictamenes/${hashCC}/SismoCheck_${timestamp}.pdf`;
+      const storageRef = ref(storage, fileName);
+      
+      Toast.fire({ icon: 'info', title: 'Subiendo copia a la nube...', timer: 2000 });
+      
+      await uploadBytes(storageRef, blob);
+      const downloadURL = await getDownloadURL(storageRef);
+
+      // 4. Actualizar Firestore
+      const userRef = doc(db, 'users', hashCC);
+      await updateDoc(userRef, {
+        pdfUrls: arrayUnion(downloadURL)
+      });
+      ================================================ */
+      
+      Toast.fire({ icon: 'success', title: 'PDF generado exitosamente.' });
     } catch (error) {
-      console.error('Error generando PDF:', error);
-      Toast.fire({ icon: 'error', title: 'Error al generar PDF: ' + (error.message || 'Desconocido') });
+      console.error('Error generando PDF o subiendo a Firebase:', error);
+      Toast.fire({ icon: 'error', title: 'Error al generar o subir PDF: ' + (error.message || 'Desconocido') });
     } finally {
       setIsGenerating(false);
     }

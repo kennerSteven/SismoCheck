@@ -12,6 +12,9 @@ export default function FormHeader() {
 
   return (
     <div className="w-full mb-8 font-sans">
+      <div className="flex justify-center w-full mb-4">
+        <img src="/morar.ok.png" alt="Morar OK" className="w-full max-w-[180px] sm:max-w-[220px] object-contain drop-shadow-sm" />
+      </div>
       {/* 1. SECCIÓN DE LOGOS (TOP BAR) */}
       <div className="grid grid-cols-3 border-2 border-slate-900 bg-white divide-x divide-slate-300 rounded-lg overflow-hidden mb-5">
         

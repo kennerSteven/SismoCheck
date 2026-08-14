@@ -2,9 +2,10 @@ import React, { useState } from 'react';
 import useFormStore from '../../store/useFormStore';
 import CustomButton from '../ui/CustomButton';
 import logoUrl from '../../assets/contro.ico';
-import qatroLogoUrl from '../../assets/Qatro.png';
-import nmLogoUrl from '../../assets/NM.png';
 import { PrivacyPolicyModal } from './PrivacyPolicyModal';
+import { db } from '../../lib/firebase';
+import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
+import CryptoJS from 'crypto-js';
 
 export default function Login() {
   const { login } = useFormStore();
@@ -35,45 +36,53 @@ export default function Login() {
       return;
     }
 
-    // LÓGICA LOCAL (LOCALSTORAGE)
     setIsLoading(true);
 
-    setTimeout(() => {
-      try {
-        let users = JSON.parse(localStorage.getItem('sismocheck_users') || '[]');
-
-        if (mode === 'register') {
-          if (!aceptoPolitica) {
-            setError('Debes aceptar la Política de Tratamiento de Datos Personales para registrarte.');
-            setIsLoading(false);
-            return;
-          }
-          
-          if (users.find(u => u.documento === documento.trim())) {
-            setError('Esta cédula ya está registrada. Por favor, inicia sesión.');
-            setIsLoading(false);
-            return;
-          }
-
-          users.push({ nombre: nombre.trim(), documento: documento.trim() });
-          localStorage.setItem('sismocheck_users', JSON.stringify(users));
-          login(nombre.trim(), documento.trim());
-          
-        } else {
-          const user = users.find(u => u.documento === documento.trim());
-          if (user) {
-            login(user.nombre, user.documento);
-          } else {
-            setError('Cédula no registrada. Por favor regístrate.');
-          }
+    try {
+      // 1. Hashear la cédula
+      const hashCC = CryptoJS.SHA256(documento.trim()).toString(CryptoJS.enc.Hex);
+      const userRef = doc(db, 'users', hashCC);
+      
+      if (mode === 'register') {
+        if (!aceptoPolitica) {
+          setError('Debes aceptar la Política de Tratamiento de Datos Personales para registrarte.');
+          setIsLoading(false);
+          return;
         }
-      } catch (err) {
-        console.error('Error login local:', err);
-        setError('Ocurrió un error local.');
-      } finally {
-        setIsLoading(false);
+        
+        // Verificar si existe
+        const snap = await getDoc(userRef);
+        if (snap.exists()) {
+          setError('Esta cédula ya está registrada. Por favor, inicia sesión.');
+          setIsLoading(false);
+          return;
+        }
+
+        // Crear documento
+        await setDoc(userRef, {
+          nombre: nombre.trim(),
+          fechaRegistro: serverTimestamp(),
+          pdfUrls: [] // Inicializar array de PDFs
+        });
+        
+        login(nombre.trim(), documento.trim());
+        
+      } else {
+        // Modo Login
+        const snap = await getDoc(userRef);
+        if (snap.exists()) {
+          const userData = snap.data();
+          login(userData.nombre, documento.trim());
+        } else {
+          setError('Cédula no registrada. Por favor regístrate.');
+        }
       }
-    }, 600); // Simulamos latencia de red para que se vea la animación
+    } catch (err) {
+      console.error('Error con Firebase:', err);
+      setError('Ocurrió un error al conectarse con el servidor.');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -81,16 +90,10 @@ export default function Login() {
       <div className="bg-white max-w-md w-full rounded-[2rem] shadow-xl shadow-slate-200/50 border border-slate-100 p-8">
         
         <div className="flex flex-col items-center justify-center mb-6 text-center">
-          <div className="flex items-center justify-center gap-8 relative z-10 mb-2 w-full max-w-[280px] mx-auto">
-            <div className="flex flex-col items-center justify-center flex-1">
-              <img src={qatroLogoUrl} alt="Qatro" className="w-full max-w-[140px] md:max-w-[180px] object-contain" />
-              <small className="font-bold text-slate-800 text-[8px] md:text-[10px] -mt-5 tracking-widest uppercase">Consultoría Técnica</small>
-            </div>
-            <div className="flex flex-col items-center justify-center flex-1">
-              <img src={nmLogoUrl} alt="NM" className="w-full max-w-[100px] md:max-w-[130px] object-contain" />
-            </div>
+          <div className="flex items-center justify-center relative z-10 mb-2 w-full mx-auto">
+            <img src="/morar.ok.png" alt="Morar OK" className="w-full max-w-[220px] md:max-w-[260px] object-contain drop-shadow-sm" />
           </div>
-          <p className="text-slate-500 text-sm font-medium leading-relaxed px-2 mb-4 mt-4">
+          <p className="text-slate-500 text-sm font-medium leading-relaxed px-2 mb-4">
             Guía Técnica para la Inspección de Edificaciones Después de un Sismo
           </p>
 
