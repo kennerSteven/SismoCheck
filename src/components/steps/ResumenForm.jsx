@@ -1,6 +1,7 @@
 import React, { useMemo, useRef, useState } from 'react';
 import { toJpeg } from 'html-to-image';
 import jsPDF from 'jspdf';
+import html2pdf from 'html2pdf.js';
 import useFormStore from '../../store/useFormStore';
 import { Toast } from '../../utils/alerts';
 import { db, storage } from '../../lib/firebase';
@@ -11,6 +12,13 @@ import { calcularValoracion, clasificarFisura, AMARILLO, NARANJA, ROJO, getColor
 import CustomButton from '../ui/CustomButton';
 import FormHeader from '../layout/FormHeader';
 import { PDFDocument } from '../layout/PDFDocument';
+
+const withTimeout = (promise, ms, rejectMessage = 'Timeout de conexión') => {
+  return Promise.race([
+    promise,
+    new Promise((_, reject) => setTimeout(() => reject(new Error(rejectMessage)), ms))
+  ]);
+};
 
 // --- COMPONENTES AUXILIARES ---
 
@@ -89,9 +97,72 @@ export default function ResumenForm() {
   const handleDownloadPDF = async () => {
     try {
       setIsGenerating(true);
-      // --- 1. GUARDAR DATOS EN LA NUBE PRIMERO ---
-      Toast.fire({ icon: 'info', title: 'Guardando datos en la nube...', timer: 2000 });
+      // --- 1. GENERAR Y DESCARGAR PDF LOCALMENTE PRIMERO ---
+      console.log('Iniciando generación de PDF...');
+      Toast.fire({ icon: 'info', title: 'Generando PDF, por favor espere...', timer: 3000 });
 
+      const node = pdfRef.current;
+      if (!node) {
+        throw new Error("Referencia del PDF no encontrada");
+      }
+
+      console.log('Creando instancia jsPDF...');
+      const pdf = new jsPDF('p', 'mm', 'a4');
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+      const pdfHeight = pdf.internal.pageSize.getHeight();
+      const margin = 10;
+      
+      const blocks = Array.from(node.querySelectorAll('.pdf-block'));
+      console.log('Bloques encontrados:', blocks.length);
+      if (blocks.length === 0) {
+        throw new Error("No se encontraron bloques para el PDF");
+      }
+
+      let currentY = margin;
+      const containerRect = node.getBoundingClientRect();
+      const scale = (pdfWidth - 2 * margin) / 794;
+
+      for (let i = 0; i < blocks.length; i++) {
+        console.log(`Renderizando bloque ${i + 1}/${blocks.length}...`);
+        const block = blocks[i];
+        const blockRect = block.getBoundingClientRect();
+        const xOffset = blockRect.left - containerRect.left;
+        
+        const blockX = margin + (xOffset * scale);
+        const scaledWidth = block.offsetWidth * scale;
+        const scaledHeight = block.offsetHeight * scale;
+        
+        if (currentY + scaledHeight > pdfHeight - margin) {
+          pdf.addPage();
+          currentY = margin;
+        }
+
+        try {
+          const dataUrl = await toJpeg(block, { 
+            quality: 0.98, 
+            pixelRatio: 2,
+            backgroundColor: '#ffffff',
+            style: { margin: '0' }
+          });
+          pdf.addImage(dataUrl, 'JPEG', blockX, currentY, scaledWidth, scaledHeight, undefined, 'FAST');
+        } catch (imgError) {
+          console.warn("Error renderizando un bloque del PDF:", imgError);
+          pdf.setFillColor(240, 240, 240);
+          pdf.rect(blockX, currentY, scaledWidth, scaledHeight, 'F');
+          pdf.setTextColor(150, 150, 150);
+          pdf.setFontSize(8);
+          pdf.text("Bloque no pudo ser renderizado", blockX + 5, currentY + 10);
+        }
+        
+        currentY += scaledHeight + (4 * scale); 
+      }
+
+      console.log('Guardando archivo PDF...');
+      pdf.save('morar.ok_Dictamen.pdf');
+      console.log('PDF guardado localmente.');
+
+      // --- 2. GUARDAR DATOS EN LA NUBE ---
+      Toast.fire({ icon: 'info', title: 'Sincronizando con la nube...', timer: 2000 });
       let dbSuccess = false;
       try {
         const userDoc = user?.documento || step1?.cedulaDiligenciador || '000000000';
@@ -105,8 +176,8 @@ export default function ResumenForm() {
           // Subir Foto Fachada (Base64) si existe
           if (step1Updated.fotoFachadaUrl && step1Updated.fotoFachadaUrl.startsWith('data:image')) {
             const fachadaRef = ref(storage, `fotos/${hashCC}/${timestampMs}_fachada.jpg`);
-            await uploadString(fachadaRef, step1Updated.fotoFachadaUrl, 'data_url');
-            step1Updated.fotoFachadaUrl = await getDownloadURL(fachadaRef);
+            await withTimeout(uploadString(fachadaRef, step1Updated.fotoFachadaUrl, 'data_url'), 10000);
+            step1Updated.fotoFachadaUrl = await withTimeout(getDownloadURL(fachadaRef), 5000);
           }
 
           // Subir Fotos de Fisuras (Objetos File)
@@ -115,8 +186,8 @@ export default function ResumenForm() {
             
             if (fisura.foto && fisura.foto instanceof File) {
               const fisuraRef = ref(storage, `fotos/${hashCC}/${timestampMs}_fisura_${i}.jpg`);
-              await uploadBytes(fisuraRef, fisura.foto);
-              const downloadUrl = await getDownloadURL(fisuraRef);
+              await withTimeout(uploadBytes(fisuraRef, fisura.foto), 10000);
+              const downloadUrl = await withTimeout(getDownloadURL(fisuraRef), 5000);
               
               fisura.fotoUrl = downloadUrl;
               if (fisura._raw) {
@@ -231,81 +302,14 @@ export default function ResumenForm() {
         
         // Guardar en una colección raíz 'diagnosticos' para escalabilidad absoluta
         const diagnosticosRef = collection(db, 'diagnosticos');
-        await addDoc(diagnosticosRef, diagnosticoDoc);
+        await withTimeout(addDoc(diagnosticosRef, diagnosticoDoc), 15000);
         
         console.log('Guardado exitoso en Firestore.');
         dbSuccess = true;
       } catch (dbError) {
         console.error('Error al guardar en Firestore/Storage:', dbError);
-        Toast.fire({ icon: 'warning', title: 'Error de conexión a la base de datos. Generando solo el PDF...' });
+        Toast.fire({ icon: 'warning', title: 'Error de conexión a la base de datos. Se generó solo el PDF.' });
       }
-
-      // --- 2. GENERAR Y DESCARGAR PDF LOCALMENTE ---
-      console.log('Iniciando generación de PDF...');
-      Toast.fire({ icon: 'info', title: 'Generando PDF, por favor espere...', timer: 3000 });
-
-      const node = pdfRef.current;
-      if (!node) {
-        console.error('Referencia del PDF no encontrada.');
-        throw new Error("Referencia del PDF no encontrada");
-      }
-
-      console.log('Creando instancia jsPDF...');
-      const pdf = new jsPDF('p', 'mm', 'a4');
-      const pdfWidth = pdf.internal.pageSize.getWidth();
-      const pdfHeight = pdf.internal.pageSize.getHeight();
-      const margin = 10;
-      
-      const blocks = Array.from(node.querySelectorAll('.pdf-block'));
-      console.log('Bloques encontrados:', blocks.length);
-      if (blocks.length === 0) {
-        console.error('No se encontraron bloques pdf-block.');
-        throw new Error("No se encontraron bloques para el PDF");
-      }
-
-      let currentY = margin;
-      const containerRect = node.getBoundingClientRect();
-      const scale = (pdfWidth - 2 * margin) / 794;
-
-      for (let i = 0; i < blocks.length; i++) {
-        console.log(`Renderizando bloque ${i + 1}/${blocks.length}...`);
-        const block = blocks[i];
-        const blockRect = block.getBoundingClientRect();
-        const xOffset = blockRect.left - containerRect.left;
-        
-        const blockX = margin + (xOffset * scale);
-        const scaledWidth = block.offsetWidth * scale;
-        const scaledHeight = block.offsetHeight * scale;
-        
-        if (currentY + scaledHeight > pdfHeight - margin) {
-          pdf.addPage();
-          currentY = margin;
-        }
-
-        try {
-          const dataUrl = await toJpeg(block, { 
-            quality: 0.98, 
-            pixelRatio: 2,
-            backgroundColor: '#ffffff',
-            style: { margin: '0' }
-          });
-          pdf.addImage(dataUrl, 'JPEG', blockX, currentY, scaledWidth, scaledHeight, undefined, 'FAST');
-        } catch (imgError) {
-          console.warn("Error renderizando un bloque del PDF:", imgError);
-          // Si falla, pintar un rectángulo gris para no detener la descarga del PDF
-          pdf.setFillColor(240, 240, 240);
-          pdf.rect(blockX, currentY, scaledWidth, scaledHeight, 'F');
-          pdf.setTextColor(150, 150, 150);
-          pdf.setFontSize(8);
-          pdf.text("Bloque no pudo ser renderizado", blockX + 5, currentY + 10);
-        }
-        
-        currentY += scaledHeight + (4 * scale); 
-      }
-
-      console.log('Guardando archivo PDF...');
-      pdf.save('morar.ok_Dictamen.pdf');
-      console.log('PDF guardado.');
 
       if (dbSuccess) {
         Toast.fire({ icon: 'success', title: 'Datos guardados y PDF exportado exitosamente.' });
@@ -639,7 +643,7 @@ export default function ResumenForm() {
         </div>
       </div>
       {/* COMPONENTE OCULTO PARA GENERAR EL PDF FORMAL (A4) */}
-      <div className="absolute top-[-10000px] left-[-10000px] w-auto h-auto pointer-events-none -z-50">
+      <div className="absolute opacity-0 pointer-events-none" style={{ top: 0, left: 0, zIndex: -9999 }}>
         <PDFDocument 
           ref={pdfRef}
           fichaCompleta={fichaCompleta}
