@@ -3,7 +3,7 @@ import { toJpeg } from 'html-to-image';
 import jsPDF from 'jspdf';
 import useFormStore from '../../store/useFormStore';
 import { Toast } from '../../utils/alerts';
-import { calcularValoracion, clasificarFisura, VERDE, AMARILLO, NARANJA, ROJO, getColorStyles, getRecomendacionFisura, getFisuraLabel } from '../../engine/riskEngine';
+import { calcularValoracion, clasificarFisura, AMARILLO, NARANJA, ROJO, getColorStyles, getRecomendacionFisura, getFisuraLabel } from '../../engine/riskEngine';
 import CustomButton from '../ui/CustomButton';
 import FormHeader from '../layout/FormHeader';
 import { PDFDocument } from '../layout/PDFDocument';
@@ -89,46 +89,53 @@ export default function ResumenForm() {
       
       if (!node) throw new Error("Referencia del PDF no encontrada");
 
-      // 1. Generate a highly compressed JPEG but with high quality and FULL dimensions
-      const dataUrl = await toJpeg(node, { 
-        quality: 0.95, 
-        pixelRatio: 2,
-        backgroundColor: '#ffffff',
-        width: node.scrollWidth,
-        height: node.scrollHeight,
-        style: {
-          transform: 'none',
-          margin: '0'
-        }
-      });
-
-      // 4. Create PDF and paginate!
+      // 1. Instanciar jsPDF
       const pdf = new jsPDF('p', 'mm', 'a4');
       const pdfWidth = pdf.internal.pageSize.getWidth();
       const pdfHeight = pdf.internal.pageSize.getHeight();
+      const margin = 10;
       
-      const imgProps = pdf.getImageProperties(dataUrl);
-      const totalPdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
-      
-      let heightLeft = totalPdfHeight;
-      let position = 0;
+      const blocks = Array.from(node.querySelectorAll('.pdf-block'));
+      if (blocks.length === 0) throw new Error("No se encontraron bloques para el PDF");
 
-      // Page 1
-      pdf.addImage(dataUrl, 'JPEG', 0, position, pdfWidth, totalPdfHeight, undefined, 'FAST');
-      heightLeft -= pdfHeight;
+      let currentY = margin;
+      const containerRect = node.getBoundingClientRect();
+      const scale = (pdfWidth - 2 * margin) / 794;
 
-      // Extra pages
-      while (heightLeft > 0) {
-        position = heightLeft - totalPdfHeight; 
-        pdf.addPage();
-        pdf.addImage(dataUrl, 'JPEG', 0, position, pdfWidth, totalPdfHeight, undefined, 'FAST');
-        heightLeft -= pdfHeight;
+      for (let i = 0; i < blocks.length; i++) {
+        const block = blocks[i];
+        
+        // Generar imagen de alta calidad del bloque
+        const dataUrl = await toJpeg(block, { 
+          quality: 0.98, 
+          pixelRatio: 2,
+          backgroundColor: '#ffffff',
+          style: { margin: '0' }
+        });
+
+        const blockRect = block.getBoundingClientRect();
+        const xOffset = blockRect.left - containerRect.left;
+        
+        const blockX = margin + (xOffset * scale);
+        const scaledWidth = block.offsetWidth * scale;
+        const scaledHeight = block.offsetHeight * scale;
+        
+        // Si el bloque no cabe en la página actual, saltar de página
+        if (currentY + scaledHeight > pdfHeight - margin) {
+          pdf.addPage();
+          currentY = margin;
+        }
+
+        pdf.addImage(dataUrl, 'JPEG', blockX, currentY, scaledWidth, scaledHeight, undefined, 'FAST');
+        
+        // Separación vertical entre bloques en la misma página
+        currentY += scaledHeight + (4 * scale); 
       }
 
       pdf.save('SismoCheck_Dictamen.pdf');
     } catch (error) {
       console.error('Error generando PDF:', error);
-      Toast.fire({ icon: 'error', title: 'Error al generar PDF' });
+      Toast.fire({ icon: 'error', title: 'Error al generar PDF: ' + (error.message || 'Desconocido') });
     } finally {
       setIsGenerating(false);
     }
@@ -172,7 +179,7 @@ export default function ResumenForm() {
         cubiertas: step6?.cubiertas || []
       }
     };
-  }, [step2, step3, step4, step5, step6, fisurasRaw, instalacionesRaw]);
+  }, [step2, step4, step5, step6, fisurasRaw, instalacionesRaw]);
 
   // 2. Ejecutar motor de cálculo y obtener factores
   const { valoracion, factores } = useMemo(() => {
@@ -327,17 +334,32 @@ export default function ResumenForm() {
                   const col = clasificarFisura(f, fichaCompleta.sistema);
                   const sColor = getColorStyles(col);
                   return (
-                    <div key={idx} className="flex flex-col sm:flex-row justify-between py-4 border-b border-dotted border-gray-400 gap-4">
-                      <div className="flex items-start gap-3 w-full sm:w-1/3">
-                        <span className="text-gray-900 font-black text-sm whitespace-nowrap">#{idx + 1} - {f.elemento.toUpperCase()}</span>
-                        <Badge colorClass={sColor.badgeClass}>{sColor.colorName}</Badge>
-                      </div>
-                      <div className="text-left sm:text-right flex flex-col sm:items-end w-full sm:w-2/3">
-                        <span className="text-gray-900 text-sm font-medium">
-                          {f._raw?.tipo?.replace(/_/g, ' ') || 'Fisura'} — {getFisuraLabel(f.tamano)} — {getFisuraLabel(f.evolucion)} — Aceros expuestos: {f.aceros} {f.aceros === 'Sí' ? `(corrosión: ${f.corrosion})` : ''}
+                    <div key={idx} className="flex flex-col sm:flex-row py-5 border-b border-dotted border-gray-400 gap-4 sm:gap-6 items-start">
+                      {f._raw?.fotoUrl ? (
+                        <div className="w-24 h-24 sm:w-32 sm:h-32 rounded-lg overflow-hidden border border-gray-200 shadow-sm shrink-0">
+                          <img src={f._raw.fotoUrl} alt={`Foto daño ${idx + 1}`} className="w-full h-full object-cover" />
+                        </div>
+                      ) : (
+                        <div className="w-24 h-24 sm:w-32 sm:h-32 rounded-lg bg-slate-50 border border-gray-200 flex items-center justify-center shrink-0">
+                          <span className="text-xs text-gray-400 italic">Sin foto</span>
+                        </div>
+                      )}
+                      <div className="flex-1 text-left flex flex-col justify-center h-full">
+                        <div className="flex items-center gap-3 mb-2">
+                          <span className="text-gray-900 font-black text-base">#{idx + 1} - {f.elemento.toUpperCase()}</span>
+                          <Badge colorClass={sColor.badgeClass}>{sColor.colorName}</Badge>
+                        </div>
+                        <span className="text-gray-800 text-sm font-medium mb-1">
+                          <span className="text-gray-500 font-normal">Tipo:</span> {f._raw?.tipo?.replace(/_/g, ' ') || 'Fisura'}
                         </span>
-                        <span className="text-gray-500 text-xs mt-1">
-                          {getRecomendacionFisura(col)}
+                        <span className="text-gray-800 text-sm font-medium mb-1">
+                          <span className="text-gray-500 font-normal">Tamaño:</span> {getFisuraLabel(f.tamano)} <span className="text-gray-400 mx-1">|</span> <span className="text-gray-500 font-normal">Evolución:</span> {getFisuraLabel(f.evolucion)}
+                        </span>
+                        <span className="text-gray-800 text-sm font-medium mb-2">
+                          <span className="text-gray-500 font-normal">Aceros expuestos:</span> {f.aceros} {f.aceros === 'Sí' ? `(Corrosión: ${f.corrosion})` : ''}
+                        </span>
+                        <span className="text-gray-500 text-xs italic leading-tight">
+                          Recomendación: {getRecomendacionFisura(col)}
                         </span>
                       </div>
                     </div>
@@ -430,7 +452,7 @@ export default function ResumenForm() {
         </div>
       </div>
       {/* COMPONENTE OCULTO PARA GENERAR EL PDF FORMAL (A4) */}
-      <div className="absolute top-0 left-0 w-full overflow-hidden opacity-0 pointer-events-none -z-50 h-0">
+      <div className="absolute top-[-10000px] left-[-10000px] w-auto h-auto pointer-events-none -z-50">
         <PDFDocument 
           ref={pdfRef}
           fichaCompleta={fichaCompleta}

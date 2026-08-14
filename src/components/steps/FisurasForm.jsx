@@ -306,7 +306,7 @@ export default function FisurasForm({ onNext }) {
                           : 'border-slate-100 hover:border-[#1F3B5F] hover:bg-slate-50'
                       }`}
                     >
-                      <div className="w-full h-32 sm:h-48 bg-white p-2 rounded-lg mb-3 flex items-center justify-center text-slate-400 font-medium text-xs overflow-hidden">
+                      <div className="w-full h-36 sm:h-56 bg-white p-4 pt-6 rounded-lg mb-3 flex items-center justify-center text-slate-400 font-medium text-xs overflow-hidden">
                         {imgSrc ? (
                           <img src={imgSrc} alt={opt.label} className="w-full h-full object-contain" />
                         ) : (
@@ -401,10 +401,8 @@ export default function FisurasForm({ onNext }) {
                 </label>
               </div>
 
-              {(grupoEstructural === 'concreto' || grupoEstructural === 'prefab') && (
-                <>
-                  <div>
-                <label className="block text-xs font-bold text-slate-600 uppercase mb-3">¿SE VEN ACEROS (VARILLAS) EXPUESTOS CERCA DEL DAÑO?</label>
+              <div>
+                <label className="block text-xs font-bold text-slate-600 uppercase mb-3">¿SE VEN ACEROS (VARILLAS / PERFILES) EXPUESTOS CERCA DEL DAÑO?</label>
                 <div className="grid grid-cols-3 gap-4">
                   {ACEROS_OPTIONS.map(opt => (
                     <div 
@@ -431,7 +429,7 @@ export default function FisurasForm({ onNext }) {
                 </div>
               </div>
 
-              {tempFisura.aceros === 'Sí' && (
+              {tempFisura.aceros === 'Sí' && ['estructura_metalica', 'otro_mixto'].includes(formData.step2?.tipoConstruccion) && (
                 <div className="mt-6 animate-in fade-in slide-in-from-top-2 duration-300">
                   <label className="block text-xs font-bold text-slate-600 uppercase mb-3">¿ESOS ACEROS TIENEN CORROSIÓN (ÓXIDO)?</label>
                   <div className="grid grid-cols-3 gap-4">
@@ -452,8 +450,6 @@ export default function FisurasForm({ onNext }) {
                   </div>
                 </div>
                   )}
-                </>
-              )}
             </div>
           )}
         </div>
@@ -476,7 +472,7 @@ export default function FisurasForm({ onNext }) {
             </button>
           </div>
           
-          {currentSubStep === 5 && tempFisura.aceros && (tempFisura.aceros !== 'Sí' || tempFisura.corrosion) && (
+          {currentSubStep === 5 && (tempFisura.aceros && (tempFisura.aceros !== 'Sí' || !['estructura_metalica', 'otro_mixto'].includes(formData.step2?.tipoConstruccion) || tempFisura.corrosion)) && (
             <button 
               type="button" 
               onClick={handleSaveFisura}
@@ -534,10 +530,17 @@ export default function FisurasForm({ onNext }) {
                     </span>
                   </div>
                 </div>
+                
+                {f.fotoUrl && (
+                  <div className="flex-shrink-0 w-16 h-16 sm:w-20 sm:h-20 rounded-lg overflow-hidden border border-slate-200 shadow-sm ml-2">
+                    <img src={f.fotoUrl} alt={`Foto de daño ${index + 1}`} className="w-full h-full object-cover" />
+                  </div>
+                )}
+
                 <button 
                   type="button"
                   onClick={() => handleDelete(index)}
-                  className="bg-slate-50 text-slate-400 hover:bg-red-50 hover:text-red-500 p-2 rounded-full transition-colors shrink-0"
+                  className="bg-slate-50 text-slate-400 hover:bg-red-50 hover:text-red-500 p-2 rounded-full transition-colors shrink-0 ml-1"
                 >
                   <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-4 h-4">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />

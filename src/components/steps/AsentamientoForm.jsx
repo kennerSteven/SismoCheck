@@ -1,5 +1,5 @@
 import React from 'react';
-import { useForm, Controller } from 'react-hook-form';
+import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import useFormStore from '../../store/useFormStore';
@@ -8,6 +8,9 @@ import imgUniforme from '../../assets/fotos/05_Terreno_cimentacion_asentamientos
 import imgDiferencial from '../../assets/fotos/05_Terreno_cimentacion_asentamientos/Asentamientos_deformaciones/6_Asentamiento_diferencial.png';
 import imgInclinacion from '../../assets/fotos/05_Terreno_cimentacion_asentamientos/Asentamientos_deformaciones/7_Inclinacion_general_construccion.png';
 import imgLocalizado from '../../assets/fotos/05_Terreno_cimentacion_asentamientos/Asentamientos_deformaciones/8_Hundimiento_localizado.png';
+
+import videoCanica from '../../assets/Media/inclinacion en suelos.mp4';
+import videoPlomada from '../../assets/Media/Inclinacion vertical.mp4';
 
 // --- DICCIONARIO DE DATOS ---
 const ASENTAMIENTO_CARDS = [
@@ -86,23 +89,43 @@ export default function AsentamientoForm({ onNext }) {
 
       {/* INSTRUCCIONES INICIALES (PRUEBAS) */}
       <div className="grid md:grid-cols-2 gap-4 mb-10">
-        <div className="bg-blue-50/50 border border-blue-100 rounded-xl p-5 shadow-sm">
+        <div className="bg-blue-50/50 border border-blue-100 rounded-xl p-5 shadow-sm flex flex-col">
           <h3 className="font-bold text-blue-900 mb-2 flex items-center gap-2">
             <span className="bg-blue-200 text-blue-800 w-6 h-6 rounded-full flex items-center justify-center text-xs">1</span>
             PRUEBA 1... LA CANICA
           </h3>
-          <p className="text-sm text-slate-600 leading-relaxed">
+          <p className="text-sm text-slate-600 leading-relaxed mb-4">
             Coloque una canica o elemento esférico en el piso. Si rueda hacia un lado específico de manera acelerada, puede indicar un hundimiento o desnivel importante en esa dirección.
           </p>
+          <div className="mt-auto overflow-hidden rounded-lg border border-blue-200">
+            <video 
+              src={videoCanica} 
+              autoPlay 
+              loop 
+              muted 
+              playsInline 
+              className="w-full h-auto object-cover"
+            />
+          </div>
         </div>
-        <div className="bg-slate-50 border border-slate-200 rounded-xl p-5 shadow-sm">
+        <div className="bg-slate-50 border border-slate-200 rounded-xl p-5 shadow-sm flex flex-col">
           <h3 className="font-bold text-slate-700 mb-2 flex items-center gap-2">
             <span className="bg-slate-200 text-slate-700 w-6 h-6 rounded-full flex items-center justify-center text-xs">2</span>
             PRUEBA 2... LA PLOMADA
           </h3>
-          <p className="text-sm text-slate-600 leading-relaxed">
+          <p className="text-sm text-slate-600 leading-relaxed mb-4">
             Desde la parte superior de un muro o columna, deje caer una plomada (o un peso atado a una cuerda). Si la distancia entre la cuerda y la pared varía drásticamente abajo, la construcción podría estar inclinada.
           </p>
+          <div className="mt-auto overflow-hidden rounded-lg border border-slate-200">
+            <video 
+              src={videoPlomada} 
+              autoPlay 
+              loop 
+              muted 
+              playsInline 
+              className="w-full h-auto object-cover"
+            />
+          </div>
         </div>
       </div>
 
@@ -114,7 +137,7 @@ export default function AsentamientoForm({ onNext }) {
             <div key={card.id} className={`flex flex-col h-full border-2 rounded-2xl overflow-hidden transition-all duration-300 ${errors[card.id] ? 'border-red-300 bg-red-50/30' : 'border-slate-100 bg-white hover:border-slate-300 shadow-sm'}`}>
               
               {/* Imagen */}
-              <div className="w-full h-56 bg-white p-2 flex flex-col items-center justify-center overflow-hidden">
+              <div className="w-full h-64 bg-white p-4 pt-8 flex flex-col items-center justify-center overflow-hidden">
                 {card.imageSrc ? (
                   <img src={card.imageSrc} alt={card.titulo} className="w-full h-full object-contain transition-transform duration-500 hover:scale-110" />
                 ) : (

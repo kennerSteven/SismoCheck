@@ -60,7 +60,7 @@ const SelectableImageCard = ({ title, description, imageSrc, isSelected, onClick
   );
 };
 
-export default function SistemaEstructuralForm({ onNext, onPrev }) {
+export default function SistemaEstructuralForm({ onNext }) {
   const { formData, setFormData } = useFormStore();
   
   const defaultValues = {

@@ -5,18 +5,18 @@ import qatroLogoUrl from '../../assets/Qatro.png';
 import nmLogoUrl from '../../assets/NM.png';
 
 const Cell = ({ label, value, colSpan = 1, className = '', valueClass = '' }) => (
-  <div className={`p-1 border-r border-b border-black flex flex-col justify-start col-span-${colSpan} ${className}`} style={{ gridColumn: `span ${colSpan} / span ${colSpan}` }}>
-    <span className="text-[6px] font-bold text-black uppercase leading-tight mb-0.5">{label}</span>
-    <span className={`text-[9px] text-black font-medium uppercase leading-tight ${valueClass}`}>{value || '\u00A0'}</span>
+  <div className={`p-3 border-r border-b border-slate-100 flex flex-col justify-start col-span-${colSpan} ${className}`} style={{ gridColumn: `span ${colSpan} / span ${colSpan}` }}>
+    <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">{label}</span>
+    <span className={`text-xs text-slate-800 font-bold leading-snug break-words break-all ${valueClass}`}>{value || '\u00A0'}</span>
   </div>
 );
 
 const Section = ({ title, children, cols = 12, className = '' }) => (
-  <div className={`mb-1.5 ${className}`}>
-    <div className="bg-slate-200 border-t border-l border-r border-black px-1.5 py-0.5 -mb-px z-10 relative">
-      <span className="text-[7px] font-extrabold text-black uppercase tracking-widest">{title}</span>
+  <div className={`mb-4 bg-white rounded-xl border border-slate-200 shadow-sm shrink-0 pdf-block ${className}`}>
+    <div className="bg-slate-50 border-b border-slate-200 px-4 py-2.5 flex items-center">
+      <span className="text-xs font-extrabold text-[#1F3B5F] uppercase tracking-widest">{title}</span>
     </div>
-    <div className="border-t border-l border-black bg-white" style={{ display: 'grid', gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))` }}>
+    <div className="grid bg-white" style={{ gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))` }}>
       {children}
     </div>
   </div>
@@ -39,156 +39,223 @@ export const PDFDocument = React.forwardRef(({
   const renderPasos = (v) => v ? `${v} pasos aprox.` : '-';
 
   return (
-    <div ref={ref} className="w-[794px] min-h-[1123px] bg-white text-black p-6 font-sans mx-auto box-border" style={{ fontFamily: 'Arial, sans-serif' }}>
+    <div ref={ref} className="w-[794px] bg-slate-50 text-slate-900 font-sans mx-auto box-border" style={{ fontFamily: 'Inter, Arial, sans-serif' }}>
       
-      {/* HEADER TIPO FORMULARIO */}
-      <div className="flex border border-black mb-1.5 bg-white">
-        <div className="w-1/3 border-r border-black p-2 flex flex-col items-center justify-center">
-          <div className="flex gap-2 items-center">
-            <img src={logoUrl} alt="Controller" className="h-6 object-contain" />
-            <img src={qatroLogoUrl} alt="Qatro" className="h-6 object-contain" />
-            <img src={nmLogoUrl} alt="NM" className="h-6 object-contain" />
+      {/* ================= MAIN CONTENT ================= */}
+      <div className="p-8 box-border relative flex flex-col gap-1">
+        
+        {/* HEADER MODERNO */}
+        <div className="flex items-center justify-between bg-white rounded-2xl p-6 border border-slate-200 shadow-sm mb-6 pdf-block">
+          <div className="flex gap-6 items-center">
+            <img src={logoUrl} alt="Controller" className="h-14 object-contain drop-shadow-sm" />
+            <div className="w-px h-12 bg-slate-200"></div>
+            <img src={qatroLogoUrl} alt="Qatro" className="h-16 object-contain drop-shadow-sm" />
+            <div className="w-px h-12 bg-slate-200"></div>
+            <img src={nmLogoUrl} alt="NM" className="h-14 object-contain drop-shadow-sm" />
+          </div>
+          <div className="flex-1 ml-8 text-right">
+            <h1 className="text-xl font-black text-[#1F3B5F] uppercase tracking-tight leading-tight">
+              DICTAMEN TÉCNICO DE<br/>INSPECCIÓN POST-SISMO
+            </h1>
+            <div className="mt-2 inline-block bg-slate-100 text-slate-600 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider">
+              {new Date().toLocaleDateString('es-CO', { year: 'numeric', month: 'long', day: 'numeric' })}
+            </div>
+          </div>
+        </div>
+
+        {/* 1. DATOS DE QUIEN DILIGENCIA */}
+        <Section title="DATOS DE QUIEN DILIGENCIA" cols={12}>
+          <Cell label="Nombre completo" value={step1?.nombreDiligenciador} colSpan={4} />
+          <Cell label="Cédula" value={step1?.cedulaDiligenciador} colSpan={2} />
+          <Cell label="Teléfono" value={step1?.telefonoDiligenciador} colSpan={3} />
+          <Cell label="Correo electrónico" value={step1?.correoDiligenciador} colSpan={3} />
+        </Section>
+
+        {/* 2. DATOS BÁSICOS DE EDIFICACIÓN */}
+        <Section title="DATOS BÁSICOS DE EDIFICACIÓN" cols={12}>
+          <Cell label="Municipio" value={step1?.municipio} colSpan={3} />
+          <Cell label="Vereda" value={step1?.vereda} colSpan={3} />
+          <Cell label="Barrio" value={step1?.barrio} colSpan={6} />
+          <Cell label="Dirección" value={step1?.direccion} colSpan={8} />
+          <Cell label="Uso actual" value={step1?.usoActual} colSpan={4} />
+          <Cell label="N.º de pisos" value={step1?.numeroPisos} colSpan={2} />
+          <Cell label="N.º de sótanos" value={step1?.numeroSotanos} colSpan={2} />
+          <Cell label="Ancho (Frente)" value={renderPasos(step1?.ancho)} colSpan={2} />
+          <Cell label="Largo (Fondo)" value={renderPasos(step1?.largo)} colSpan={3} />
+          <Cell label="Año construcción" value={step1?.anoConstruccion} colSpan={3} />
+        </Section>
+
+        {/* 3. SISTEMA ESTRUCTURAL */}
+        <Section title="SISTEMA ESTRUCTURAL" cols={12}>
+          <Cell label="Sistema Elegido" value={step2?.tipoConstruccion?.replace(/_/g, ' ')} colSpan={6} />
+          <Cell label="Tipo de Cubierta" value={step2?.tipoCubierta?.replace(/_/g, ' ')} colSpan={3} />
+          <Cell label="Tipo de Piso" value={step2?.tipoPiso?.replace(/_/g, ' ')} colSpan={3} />
+        </Section>
+
+        {/* 4. FISURAS, GRIETAS Y FALLAS */}
+        <div className="mb-4 bg-white rounded-xl border border-slate-200 shadow-sm shrink-0">
+          <div className="bg-slate-50 border-b border-slate-200 px-4 py-2.5 flex items-center rounded-t-xl pdf-block">
+            <span className="text-xs font-extrabold text-[#1F3B5F] uppercase tracking-widest">{`FISURAS, GRIETAS Y FALLAS ESTRUCTURALES (${fichaCompleta.fisuras.length})`}</span>
+          </div>
+          <div className="p-4 flex flex-col gap-4">
+            {fichaCompleta.fisuras.length === 0 ? (
+              <div className="text-sm text-slate-500 italic text-center py-4 pdf-block">No se registraron fisuras o grietas.</div>
+            ) : (
+              fichaCompleta.fisuras.map((f, i) => {
+                const col = clasificarFisura(f, fichaCompleta.sistema);
+                return (
+                  <div key={i} className="flex gap-4 border border-slate-100 rounded-xl p-3 bg-slate-50/50 shadow-sm items-start pdf-block">
+                    {f._raw?.fotoUrl ? (
+                      <img src={f._raw.fotoUrl} alt="Foto daño" className="h-24 w-24 rounded-lg object-cover border border-slate-200 shadow-sm shrink-0" />
+                    ) : (
+                      <div className="h-24 w-24 bg-slate-100 rounded-lg border border-slate-200 flex items-center justify-center shrink-0">
+                        <span className="text-[10px] text-slate-400 font-medium">SIN FOTO</span>
+                      </div>
+                    )}
+                    <div className="flex-1 flex flex-col justify-center">
+                      <div className="flex items-center gap-2 mb-1.5">
+                        <span className="bg-[#1F3B5F] text-white text-[10px] font-black px-2 py-0.5 rounded-md">#{i + 1}</span>
+                        <span className="font-black text-sm text-slate-800">{f.elemento.toUpperCase()}</span>
+                      </div>
+                      <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-xs mb-2">
+                        <span className="text-slate-700"><strong className="text-slate-500 font-semibold">Tipo:</strong> {f._raw?.tipo?.replace(/_/g, ' ') || 'Fisura'}</span>
+                        <span className="text-slate-700"><strong className="text-slate-500 font-semibold">Tamaño:</strong> {getFisuraLabel(f.tamano)}</span>
+                        <span className="text-slate-700"><strong className="text-slate-500 font-semibold">Evolución:</strong> {getFisuraLabel(f.evolucion)}</span>
+                        <span className="text-slate-700"><strong className="text-slate-500 font-semibold">Aceros exp.:</strong> {f.aceros} {f.aceros === 'Sí' ? `(Óxido: ${f.corrosion})` : ''}</span>
+                      </div>
+                      <div className="bg-white border border-slate-200 rounded-lg p-2 text-[10px] text-slate-600 font-medium italic shadow-sm">
+                        <strong className="text-slate-800 not-italic">Recomendación:</strong> {getRecomendacionFisura(col)}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })
+            )}
           </div>
         </div>
         
-        <div className="w-2/3 flex items-center justify-center p-2 bg-slate-50">
-          <h1 className="text-sm font-extrabold text-center uppercase tracking-wider">
-            DICTAMEN TÉCNICO DE INSPECCIÓN POST-SISMO
-          </h1>
+        {/* Page break before next section */}
+        <div className="html2pdf__page-break"></div>
+        
+        {/* 5. ASENTAMIENTO Y SUELO */}
+        <Section title="TERRENO: ASENTAMIENTO E INCLINACIÓN Y EVALUACIÓN DEL SUELO" cols={12}>
+          <div className="col-span-6 border-r border-slate-100 p-4">
+            <h4 className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-3 border-b border-slate-100 pb-1">Asentamiento e Inclinación</h4>
+            <div className="space-y-2">
+              <div className="flex justify-between items-center text-xs"><span className="text-slate-600">Asentamiento uniforme (parejo)</span> <span className={`font-bold px-2 py-0.5 rounded-full ${fichaCompleta.asentamiento.uniforme ? 'bg-red-100 text-red-700' : 'bg-slate-100 text-slate-700'}`}>{fichaCompleta.asentamiento.uniforme ? 'SÍ' : 'NO'}</span></div>
+              <div className="flex justify-between items-center text-xs"><span className="text-slate-600">Asentamiento diferencial (disparejo)</span> <span className={`font-bold px-2 py-0.5 rounded-full ${fichaCompleta.asentamiento.diferencial ? 'bg-red-100 text-red-700' : 'bg-slate-100 text-slate-700'}`}>{fichaCompleta.asentamiento.diferencial ? 'SÍ' : 'NO'}</span></div>
+              <div className="flex justify-between items-center text-xs"><span className="text-slate-600">Inclinación general</span> <span className={`font-bold px-2 py-0.5 rounded-full ${fichaCompleta.asentamiento.inclinacion ? 'bg-red-100 text-red-700' : 'bg-slate-100 text-slate-700'}`}>{fichaCompleta.asentamiento.inclinacion ? 'SÍ' : 'NO'}</span></div>
+              <div className="flex justify-between items-center text-xs"><span className="text-slate-600">Hundimiento localizado</span> <span className={`font-bold px-2 py-0.5 rounded-full ${fichaCompleta.asentamiento.localizado ? 'bg-red-100 text-red-700' : 'bg-slate-100 text-slate-700'}`}>{fichaCompleta.asentamiento.localizado ? 'SÍ' : 'NO'}</span></div>
+            </div>
+            <div className="mt-3 bg-slate-50 p-3 rounded-lg border border-slate-100 text-[10px] text-slate-600">
+              <strong className="text-slate-800 uppercase block mb-1">Observaciones:</strong> 
+              {step4?.observacionesAsentamiento || 'Ninguna'}
+            </div>
+          </div>
+          <div className="col-span-6 p-4">
+            <h4 className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-3 border-b border-slate-100 pb-1">Evaluación del Suelo</h4>
+            <div className="space-y-2">
+              <div className="flex justify-between items-center text-xs"><span className="text-slate-600">Deslizamiento de tierras</span> <span className={`font-bold px-2 py-0.5 rounded-full ${fichaCompleta.suelo.deslizamiento ? 'bg-red-100 text-red-700' : 'bg-slate-100 text-slate-700'}`}>{fichaCompleta.suelo.deslizamiento ? 'SÍ' : 'NO'}</span></div>
+              <div className="flex justify-between items-center text-xs"><span className="text-slate-600">Caída de rocas</span> <span className={`font-bold px-2 py-0.5 rounded-full ${fichaCompleta.suelo.caida_rocas ? 'bg-red-100 text-red-700' : 'bg-slate-100 text-slate-700'}`}>{fichaCompleta.suelo.caida_rocas ? 'SÍ' : 'NO'}</span></div>
+              <div className="flex justify-between items-center text-xs"><span className="text-slate-600">Licuefacción</span> <span className={`font-bold px-2 py-0.5 rounded-full ${fichaCompleta.suelo.licuefaccion ? 'bg-red-100 text-red-700' : 'bg-slate-100 text-slate-700'}`}>{fichaCompleta.suelo.licuefaccion ? 'SÍ' : 'NO'}</span></div>
+              <div className="flex justify-between items-center text-xs"><span className="text-slate-600">Cimentación expuesta</span> <span className={`font-bold px-2 py-0.5 rounded-full ${fichaCompleta.suelo.cimentacion_expuesta ? 'bg-red-100 text-red-700' : 'bg-slate-100 text-slate-700'}`}>{fichaCompleta.suelo.cimentacion_expuesta ? 'SÍ' : 'NO'}</span></div>
+            </div>
+            <div className="mt-3 bg-slate-50 p-3 rounded-lg border border-slate-100 text-[10px] text-slate-600">
+              <strong className="text-slate-800 uppercase block mb-1">Observaciones:</strong> 
+              {step5?.observacionesSuelo || 'Ninguna'}
+            </div>
+          </div>
+        </Section>
+
+        {/* 6. ELEMENTOS NO ESTRUCTURALES */}
+        <Section title="ELEMENTOS NO ESTRUCTURALES" cols={12}>
+          <Cell label="Fachadas" value={fichaCompleta.elementosNoEstructurales.fachadas.join(', ') || 'Sin daños'} colSpan={6} />
+          <Cell label="Puertas y ventanas" value={fichaCompleta.elementosNoEstructurales.puertas_ventanas.join(', ') || 'Sin daños'} colSpan={6} />
+          <Cell label="Pisos y cielorrasos" value={fichaCompleta.elementosNoEstructurales.pisos_cielorrasos.join(', ') || 'Sin daños'} colSpan={6} />
+          <Cell label="Muros interiores" value={fichaCompleta.elementosNoEstructurales.muros_interiores.join(', ') || 'Sin daños'} colSpan={6} />
+          <Cell label="Instalaciones" value={fichaCompleta.elementosNoEstructurales.instalaciones.join(', ') || 'Sin daños'} colSpan={6} />
+          <Cell label="Cubiertas" value={fichaCompleta.elementosNoEstructurales.cubiertas.join(', ') || 'Sin daños'} colSpan={6} />
+          {step6?.sabeTotalMuros === 'si' ? (
+            <Cell label="Cantidad total de muros / Con daños severos" value={`${step6.totalMuros} / ${step6.murosConDanos}`} colSpan={12} />
+          ) : (
+            <Cell label="¿Sabe cuántos muros tiene?" value="No" colSpan={12} />
+          )}
+        </Section>
+
+        {/* 7. EVALUACIÓN FINAL */}
+        <Section title="DICTAMEN Y FACTORES CONSIDERADOS" cols={12} className="border-2 border-[#1F3B5F]/20">
+          <div className="col-span-8 border-r border-slate-200 p-6 flex flex-col bg-white">
+            <span className="text-xs font-black text-[#1F3B5F] uppercase mb-3 tracking-wide">Principales factores que sustentan el dictamen:</span>
+            <ul className="list-disc list-outside text-xs space-y-1.5 pl-4 mb-4 text-slate-700 font-medium">
+              {factores.map((f, i) => <li key={i}>{f}</li>)}
+            </ul>
+            {olorAGas && (
+              <div className="mt-auto bg-red-100 border border-red-500 text-red-800 text-xs font-black p-3 rounded-lg flex items-center justify-center uppercase shadow-sm">
+                ALERTA DE SEGURIDAD CRÍTICA: SE REPORTÓ OLOR A GAS
+              </div>
+            )}
+          </div>
+          <div className="col-span-4 p-6 flex flex-col justify-center items-center text-center bg-slate-50">
+            <span className="text-[10px] font-black uppercase mb-3 tracking-widest text-slate-500">Clasificación de Riesgo Sugerida</span>
+            <div className={`w-full py-4 px-2 text-center font-black uppercase text-xl border-[4px] rounded-2xl shadow-sm ${styles.bg} ${styles.border} ${styles.text}`}>
+              {color_final}
+            </div>
+            <span className={`text-xs mt-3 uppercase font-black tracking-widest w-full ${styles.badge} text-white py-2 rounded-lg shadow-md`}>
+              {styles.title}
+            </span>
+            <span className="text-[9px] text-slate-400 mt-3 italic leading-tight">Esta clasificación es preliminar y requiere validación en sitio por un experto.</span>
+          </div>
+        </Section>
+
+        {/* Page break before EVIDENCIA */}
+        <div className="html2pdf__page-break"></div>
+        
+        {/* 8. EVIDENCIA */}
+        <Section title="EVIDENCIA GRÁFICA Y GEORREFERENCIACIÓN" cols={12}>
+          <div className="col-span-12 grid grid-cols-1 gap-6 p-6">
+            <div className="border-2 border-dashed border-slate-200 rounded-xl flex flex-col items-center justify-center relative p-4 h-96 bg-white overflow-hidden">
+               <div className="absolute top-4 left-4 bg-white/90 backdrop-blur-sm border border-slate-200 px-4 py-2 rounded-full z-10 shadow-sm">
+                 <span className="text-xs font-bold uppercase text-slate-700">Fotografía de Fachada</span>
+               </div>
+               {step1?.fotoFachadaUrl ? (
+                 <img src={step1.fotoFachadaUrl} alt="Fachada" className="w-full h-full object-contain rounded-lg" />
+               ) : (
+                 <div className="flex flex-col items-center gap-1 text-slate-300">
+                   <span className="text-xs font-medium uppercase tracking-widest">No suministrada</span>
+                 </div>
+               )}
+            </div>
+            <div className="border-2 border-slate-200 rounded-xl flex flex-col items-center justify-center relative p-2 h-96 bg-slate-100 overflow-hidden">
+               <div className="absolute top-4 left-4 bg-white/90 backdrop-blur-sm border border-slate-200 px-4 py-2 rounded-full z-10 shadow-sm">
+                 <span className="text-xs font-bold uppercase text-slate-700">Ubicación GPS</span>
+               </div>
+               {step1?.latitud && step1?.longitud ? (
+                  <div className="w-full h-full relative flex flex-col items-center justify-center">
+                    <img 
+                      src={`https://static-maps.yandex.ru/1.x/?lang=es-ES&ll=${step1.longitud},${step1.latitud}&z=17&l=map&size=600,450&pt=${step1.longitud},${step1.latitud},pm2rdm`} 
+                      crossOrigin="anonymous" 
+                      alt="Mapa" 
+                      className="w-full h-full object-cover absolute inset-0 rounded-lg" 
+                    />
+                    <div className="absolute bottom-4 right-4 bg-white/95 backdrop-blur-md border border-slate-200 px-4 py-2 rounded-lg text-xs font-black z-20 flex flex-col shadow-lg text-slate-700">
+                      <span>LAT: {step1.latitud}</span>
+                      <span>LNG: {step1.longitud}</span>
+                    </div>
+                  </div>
+               ) : (
+                 <div className="flex flex-col items-center gap-1 text-slate-400">
+                   <span className="text-xs font-medium uppercase tracking-widest">Sin Coordenadas</span>
+                 </div>
+               )}
+            </div>
+          </div>
+        </Section>
+        
+        {/* FOOTER */}
+        <div className="mt-8 text-center border-t border-slate-200 pt-4 pb-4 pdf-block">
+          <span className="text-[10px] text-slate-400 font-medium">Dictamen Generado por SismoCheck — Desarrollado por Qatro y Controller.</span>
         </div>
       </div>
-
-      {/* 1. DATOS DE QUIEN DILIGENCIA */}
-      <Section title="DATOS DE QUIEN DILIGENCIA" cols={12}>
-        <Cell label="Nombre completo" value={step1?.nombreDiligenciador} colSpan={4} />
-        <Cell label="Cédula" value={step1?.cedulaDiligenciador} colSpan={2} />
-        <Cell label="Teléfono" value={step1?.telefonoDiligenciador} colSpan={3} />
-        <Cell label="Correo electrónico" value={step1?.correoDiligenciador} colSpan={3} />
-      </Section>
-
-      {/* 2. DATOS BÁSICOS DE EDIFICACIÓN */}
-      <Section title="DATOS BÁSICOS DE EDIFICACIÓN" cols={12}>
-        <Cell label="Municipio" value={step1?.municipio} colSpan={3} />
-        <Cell label="Vereda" value={step1?.vereda} colSpan={3} />
-        <Cell label="Barrio" value={step1?.barrio} colSpan={6} />
-        <Cell label="Dirección" value={step1?.direccion} colSpan={8} />
-        <Cell label="Uso actual" value={step1?.usoActual} colSpan={4} />
-        <Cell label="N.º de pisos" value={step1?.numeroPisos} colSpan={2} />
-        <Cell label="N.º de sótanos" value={step1?.numeroSotanos} colSpan={2} />
-        <Cell label="Ancho (Frente)" value={renderPasos(step1?.ancho)} colSpan={2} />
-        <Cell label="Largo (Fondo)" value={renderPasos(step1?.largo)} colSpan={3} />
-        <Cell label="Año construcción" value={step1?.anoConstruccion} colSpan={3} />
-      </Section>
-
-      {/* 3. SISTEMA ESTRUCTURAL */}
-      <Section title="SISTEMA ESTRUCTURAL" cols={12}>
-        <Cell label="Sistema Elegido" value={step2?.tipoConstruccion?.replace(/_/g, ' ')} colSpan={6} />
-        <Cell label="Tipo de Cubierta" value={step2?.tipoCubierta?.replace(/_/g, ' ')} colSpan={3} />
-        <Cell label="Tipo de Piso" value={step2?.tipoPiso?.replace(/_/g, ' ')} colSpan={3} />
-      </Section>
-
-      {/* 4. FISURAS, GRIETAS Y FALLAS */}
-      <Section title={`FISURAS, GRIETAS Y FALLAS ESTRUCTURALES (${fichaCompleta.fisuras.length})`} cols={12}>
-        <div className="col-span-12 p-1 border-b border-r border-black flex flex-col">
-          {fichaCompleta.fisuras.length === 0 ? (
-            <span className="text-[8px] italic">No se registraron fisuras o grietas.</span>
-          ) : (
-            fichaCompleta.fisuras.map((f, i) => {
-              const col = clasificarFisura(f, fichaCompleta.sistema);
-              return (
-                <div key={i} className="text-[8px] border-b border-dashed border-gray-300 pb-1 mb-1 last:border-0 last:mb-0">
-                  <span className="font-bold">{i + 1}. {f.elemento.toUpperCase()}</span> — {f._raw?.tipo?.replace(/_/g, ' ') || 'Fisura'} — Tamaño: {getFisuraLabel(f.tamano)} — Evolución: {getFisuraLabel(f.evolucion)} — Aceros expuestos: {f.aceros} {f.aceros === 'Sí' ? `(Corrosión: ${f.corrosion})` : ''}
-                  <br />
-                  <span className="text-[7px] text-gray-600">Recomendación: {getRecomendacionFisura(col)}</span>
-                </div>
-              );
-            })
-          )}
-        </div>
-      </Section>
-
-      {/* 5. ASENTAMIENTO Y SUELO */}
-      <Section title="TERRENO: ASENTAMIENTO E INCLINACIÓN Y EVALUACIÓN DEL SUELO" cols={12}>
-        <div className="col-span-6 grid grid-cols-6">
-          <div className="col-span-6 p-1 border-r border-b border-black flex flex-col justify-start">
-            <span className="text-[6px] font-bold uppercase border-b border-gray-300 pb-0.5 mb-0.5">Asentamiento e Inclinación</span>
-            <div className="flex justify-between text-[8px]"><span className="truncate pr-1">Asentamiento uniforme (parejo)</span> <span className="font-bold">{fichaCompleta.asentamiento.uniforme ? 'Sí' : 'No'}</span></div>
-            <div className="flex justify-between text-[8px]"><span className="truncate pr-1">Asentamiento diferencial (disparejo)</span> <span className="font-bold">{fichaCompleta.asentamiento.diferencial ? 'Sí' : 'No'}</span></div>
-            <div className="flex justify-between text-[8px]"><span className="truncate pr-1">Inclinación general</span> <span className="font-bold">{fichaCompleta.asentamiento.inclinacion ? 'Sí' : 'No'}</span></div>
-            <div className="flex justify-between text-[8px]"><span className="truncate pr-1">Hundimiento localizado</span> <span className="font-bold">{fichaCompleta.asentamiento.localizado ? 'Sí' : 'No'}</span></div>
-            <div className="mt-1 border-t border-gray-300 pt-0.5 text-[7px]"><span className="font-bold">Observaciones:</span> {step4?.observacionesAsentamiento || 'Ninguna'}</div>
-          </div>
-        </div>
-        <div className="col-span-6 grid grid-cols-6">
-          <div className="col-span-6 p-1 border-r border-b border-black flex flex-col justify-start">
-            <span className="text-[6px] font-bold uppercase border-b border-gray-300 pb-0.5 mb-0.5">Evaluación del Suelo</span>
-            <div className="flex justify-between text-[8px]"><span className="truncate pr-1">Deslizamiento de tierras</span> <span className="font-bold">{fichaCompleta.suelo.deslizamiento ? 'Sí' : 'No'}</span></div>
-            <div className="flex justify-between text-[8px]"><span className="truncate pr-1">Caída de rocas</span> <span className="font-bold">{fichaCompleta.suelo.caida_rocas ? 'Sí' : 'No'}</span></div>
-            <div className="flex justify-between text-[8px]"><span className="truncate pr-1">Licuefacción</span> <span className="font-bold">{fichaCompleta.suelo.licuefaccion ? 'Sí' : 'No'}</span></div>
-            <div className="flex justify-between text-[8px]"><span className="truncate pr-1">Cimentación expuesta</span> <span className="font-bold">{fichaCompleta.suelo.cimentacion_expuesta ? 'Sí' : 'No'}</span></div>
-            <div className="mt-1 border-t border-gray-300 pt-0.5 text-[7px]"><span className="font-bold">Observaciones:</span> {step5?.observacionesSuelo || 'Ninguna'}</div>
-          </div>
-        </div>
-      </Section>
-
-      {/* 6. ELEMENTOS NO ESTRUCTURALES */}
-      <Section title="ELEMENTOS NO ESTRUCTURALES" cols={12}>
-        <Cell label="Fachadas" value={fichaCompleta.elementosNoEstructurales.fachadas.join(', ') || 'Sin daños'} colSpan={6} />
-        <Cell label="Puertas y ventanas" value={fichaCompleta.elementosNoEstructurales.puertas_ventanas.join(', ') || 'Sin daños'} colSpan={6} />
-        <Cell label="Pisos y cielorrasos" value={fichaCompleta.elementosNoEstructurales.pisos_cielorrasos.join(', ') || 'Sin daños'} colSpan={6} />
-        <Cell label="Muros interiores" value={fichaCompleta.elementosNoEstructurales.muros_interiores.join(', ') || 'Sin daños'} colSpan={6} />
-        <Cell label="Instalaciones" value={fichaCompleta.elementosNoEstructurales.instalaciones.join(', ') || 'Sin daños'} colSpan={6} />
-        <Cell label="Cubiertas" value={fichaCompleta.elementosNoEstructurales.cubiertas.join(', ') || 'Sin daños'} colSpan={6} />
-        {step6?.sabeCantidadMuros === 'si' ? (
-          <Cell label="Cantidad total de muros / Con daños severos" value={`${step6.cantidadMuros} / ${step6.murosDanos}`} colSpan={12} />
-        ) : (
-          <Cell label="¿Sabe cuántos muros tiene?" value="No" colSpan={12} />
-        )}
-      </Section>
-
-      {/* 7. EVALUACIÓN FINAL */}
-      <Section title="DICTAMEN Y FACTORES CONSIDERADOS" cols={12}>
-        <div className="col-span-8 border-r border-b border-black p-2 flex flex-col bg-white">
-          <span className="text-[7px] font-bold uppercase mb-1">Principales factores considerados:</span>
-          <ul className="list-disc list-inside text-[8px] space-y-0.5 pl-1 mb-2">
-            {factores.map((f, i) => <li key={i}>{f}</li>)}
-          </ul>
-          {olorAGas && <div className="text-[8px] font-black border border-black p-1 text-center uppercase">⚠️ Alerta de Seguridad: Se reportó olor a gas</div>}
-        </div>
-        <div className="col-span-4 border-b border-black flex flex-col justify-center p-2 items-center text-center">
-          <span className="text-[6px] font-bold uppercase mb-1 border-b border-black pb-0.5 w-full">Clasificación de Riesgo</span>
-          <div className={`w-full py-1 text-center font-black uppercase text-xs border-2 border-black ${styles.bg}`}>
-            {color_final}
-          </div>
-          <span className="text-[7px] mt-1 uppercase font-bold leading-tight w-full">{styles.title}</span>
-        </div>
-      </Section>
-
-      {/* 8. EVIDENCIA */}
-      <Section title="EVIDENCIA GRÁFICA Y GEORREFERENCIACIÓN" cols={12}>
-        <div className="col-span-12 grid grid-cols-2 p-1 border-r border-b border-black gap-1">
-          <div className="border border-dashed border-gray-400 flex flex-col items-center justify-center relative p-1 h-32">
-             <span className="text-[6px] font-bold uppercase absolute top-1 left-1 bg-white px-1">Fotografía de Fachada</span>
-             {step1?.fotoFachadaUrl ? (
-               <img src={step1.fotoFachadaUrl} alt="Fachada" className="w-full h-full object-contain" />
-             ) : (
-               <span className="text-[8px] text-slate-400 italic">No suministrada</span>
-             )}
-          </div>
-          <div className="border border-dashed border-gray-400 flex flex-col items-center justify-center relative p-1 h-32 bg-slate-50">
-             <span className="text-[6px] font-bold uppercase absolute top-1 left-1 bg-white px-1 z-10">Ubicación GPS</span>
-             {step1?.latitud && step1?.longitud ? (
-                <div className="flex flex-col items-center justify-center text-center">
-                  <span className="text-xl mb-1">📍</span>
-                  <span className="text-[9px] font-bold">LAT: {step1.latitud}</span>
-                  <span className="text-[9px] font-bold">LNG: {step1.longitud}</span>
-                </div>
-             ) : (
-               <span className="text-[8px] text-slate-400 italic">No registrada</span>
-             )}
-          </div>
-        </div>
-      </Section>
 
     </div>
   );

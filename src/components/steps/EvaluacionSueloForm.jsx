@@ -91,7 +91,7 @@ export default function EvaluacionSueloForm({ onNext }) {
             <div key={card.id} className={`flex flex-col h-full border-2 rounded-2xl overflow-hidden transition-all duration-300 ${errors[card.id] ? 'border-red-300 bg-red-50/30' : 'border-slate-100 bg-white hover:border-slate-300 shadow-sm'}`}>
               
               {/* Imagen */}
-              <div className="w-full h-56 bg-white p-2 flex flex-col items-center justify-center overflow-hidden">
+              <div className="w-full h-64 bg-white p-4 pt-8 flex flex-col items-center justify-center overflow-hidden">
                 {card.imageSrc ? (
                   <img src={card.imageSrc} alt={card.titulo} className="w-full h-full object-contain transition-transform duration-500 hover:scale-110" />
                 ) : (

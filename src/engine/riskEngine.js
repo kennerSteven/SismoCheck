@@ -239,7 +239,7 @@ export const getColorStyles = (colorId) => {
       };
     case ROJO:
       return { 
-        bg: 'bg-red-50', border: 'border-red-600', text: 'text-red-900', badge: 'bg-red-600', 
+        bg: 'bg-red-100', border: 'border-red-600', text: 'text-red-900', badge: 'bg-red-600', 
         title: 'ROJO — Riesgo de colapso', subtitle: 'NO HABITABLE',
         badgeClass: 'bg-red-100 text-red-800 border-red-300', colorName: 'ROJO'
       };

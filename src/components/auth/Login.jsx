@@ -68,6 +68,7 @@ export default function Login() {
           }
         }
       } catch (err) {
+        console.error('Error login local:', err);
         setError('Ocurrió un error local.');
       } finally {
         setIsLoading(false);

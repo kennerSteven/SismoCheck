@@ -1,5 +1,5 @@
 import React from 'react';
-import { RotateCcw } from 'lucide-react';
+
 import StepperHeader from '../ui/StepperHeader';
 import CustomButton from '../ui/CustomButton';
 import useFormStore from '../../store/useFormStore';
@@ -10,20 +10,6 @@ const WizardLayout = ({ children }) => {
   const { currentStep, prevStep, resetDiagnostico, isFooterHidden } = useFormStore();
   const totalSteps = 6;
 
-  const handleReset = () => {
-    DangerConfirmModal.fire({
-      title: '¿Reiniciar diagnóstico?',
-      text: "Perderás todos los datos ingresados. Esta acción no se puede deshacer.",
-      icon: 'warning',
-      showCancelButton: true,
-      confirmButtonText: 'Sí, reiniciar',
-      cancelButtonText: 'Cancelar'
-    }).then((result) => {
-      if (result.isConfirmed) {
-        resetDiagnostico();
-      }
-    });
-  };
 
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col font-sans text-slate-900 selection:bg-blue-100 selection:text-blue-900">

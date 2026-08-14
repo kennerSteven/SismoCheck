@@ -103,7 +103,7 @@ const elementosSchema = z.object({
 });
 
 // Componente Local: MultiSelectDropdown
-const MultiSelectDropdown = ({ title, options, selected, onChange }) => {
+const MultiSelectDropdown = ({ options, selected, onChange }) => {
   const [isOpen, setIsOpen] = useState(false);
   const containerRef = useRef(null);
 
@@ -207,6 +207,7 @@ export default function ElementosNoEstructuralesForm({ onNext }) {
     defaultValues
   });
 
+  // eslint-disable-next-line react-hooks/incompatible-library
   const sabeTotalMuros = watch('sabeTotalMuros');
 
   // Limpiar totalMuros si selecciona "No"
@@ -257,7 +258,6 @@ export default function ElementosNoEstructuralesForm({ onNext }) {
                 control={control}
                 render={({ field }) => (
                   <MultiSelectDropdown
-                    title={grupo.titulo}
                     options={grupo.opciones}
                     selected={field.value}
                     onChange={field.onChange}

@@ -11,7 +11,7 @@ const zNum = (msg, minVal, minMsg) =>
    .transform((val) => Number(val))
    .refine((val) => minVal === undefined || val >= minVal, { message: minMsg || msg });
 
-export const step1Schema = z.object({
+const step1Schema = z.object({
   nombreDiligenciador: z.string().min(1, 'El nombre completo es obligatorio'),
   cedulaDiligenciador: z.string().min(1, 'La cédula es obligatoria'),
   telefonoDiligenciador: z.string().min(1, 'El teléfono de contacto es obligatorio'),
@@ -118,9 +118,11 @@ export default function Step1({ onNext }) {
     defaultValues
   });
 
+  /* eslint-disable react-hooks/incompatible-library */
   const fotoFachadaFiles = watch('fotoFachada');
   const anchoVal = watch('ancho');
   const largoVal = watch('largo');
+  /* eslint-enable react-hooks/incompatible-library */
 
   React.useEffect(() => {
     if (fotoFachadaFiles && fotoFachadaFiles.length > 0) {

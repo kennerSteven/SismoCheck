@@ -58,6 +58,16 @@ function App() {
           {renderStep()}
         </Suspense>
       </WizardLayout>
+      <button 
+        onClick={() => {
+          // If the ModalColapsoPrevio is technically still there, it's fine. 
+          // The button should just be reachable without being under the footer.
+          useFormStore.getState().fillTestData();
+        }}
+        className="fixed bottom-24 left-4 bg-slate-800 text-white text-[10px] px-3 py-1.5 rounded-full font-bold shadow-lg hover:bg-slate-700 z-[110] flex items-center gap-1 opacity-50 hover:opacity-100 transition-opacity"
+      >
+        ⚙️ Llenar Test
+      </button>
     </>
   );
 }
