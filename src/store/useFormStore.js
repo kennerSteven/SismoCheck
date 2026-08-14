@@ -20,6 +20,9 @@ const useFormStore = create(
       setFooterHidden: (hidden) => set({ isFooterHidden: hidden }),
       setFormData: (step, data) => 
         set((state) => {
+          console.log(`\n=== DATOS CAPTURADOS: ${step.toUpperCase()} ===`);
+          console.log(data);
+          console.log('===================================\n');
           return {
             formData: {
               ...state.formData,

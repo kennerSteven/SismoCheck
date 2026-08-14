@@ -4,8 +4,8 @@ import jsPDF from 'jspdf';
 import useFormStore from '../../store/useFormStore';
 import { Toast } from '../../utils/alerts';
 import { db, storage } from '../../lib/firebase';
-import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
-import { doc, updateDoc, arrayUnion } from 'firebase/firestore';
+import { ref, uploadBytes, uploadString, getDownloadURL } from 'firebase/storage';
+import { collection, doc, addDoc, updateDoc, serverTimestamp, arrayUnion } from 'firebase/firestore';
 import CryptoJS from 'crypto-js';
 import { calcularValoracion, clasificarFisura, AMARILLO, NARANJA, ROJO, getColorStyles, getRecomendacionFisura, getFisuraLabel } from '../../engine/riskEngine';
 import CustomButton from '../ui/CustomButton';
@@ -89,34 +89,187 @@ export default function ResumenForm() {
   const handleDownloadPDF = async () => {
     try {
       setIsGenerating(true);
-      const node = pdfRef.current;
-      
-      if (!node) throw new Error("Referencia del PDF no encontrada");
+      // --- 1. GUARDAR DATOS EN LA NUBE PRIMERO ---
+      Toast.fire({ icon: 'info', title: 'Guardando datos en la nube...', timer: 2000 });
 
-      // 1. Instanciar jsPDF
+      let dbSuccess = false;
+      try {
+        const userDoc = user?.documento || step1?.cedulaDiligenciador || '000000000';
+        const hashCC = CryptoJS.SHA256(String(userDoc).trim()).toString(CryptoJS.enc.Hex);
+        const timestampMs = new Date().getTime();
+
+        let step1Updated = { ...(formData.step1 || {}) };
+        let step3Updated = { ...(formData.step3 || {}), fisurasList: formData.step3?.fisurasList ? [...formData.step3.fisurasList] : [] };
+
+        try {
+          // Subir Foto Fachada (Base64) si existe
+          if (step1Updated.fotoFachadaUrl && step1Updated.fotoFachadaUrl.startsWith('data:image')) {
+            const fachadaRef = ref(storage, `fotos/${hashCC}/${timestampMs}_fachada.jpg`);
+            await uploadString(fachadaRef, step1Updated.fotoFachadaUrl, 'data_url');
+            step1Updated.fotoFachadaUrl = await getDownloadURL(fachadaRef);
+          }
+
+          // Subir Fotos de Fisuras (Objetos File)
+          for (let i = 0; i < step3Updated.fisurasList.length; i++) {
+            let fisura = { ...step3Updated.fisurasList[i] };
+            
+            if (fisura.foto && fisura.foto instanceof File) {
+              const fisuraRef = ref(storage, `fotos/${hashCC}/${timestampMs}_fisura_${i}.jpg`);
+              await uploadBytes(fisuraRef, fisura.foto);
+              const downloadUrl = await getDownloadURL(fisuraRef);
+              
+              fisura.fotoUrl = downloadUrl;
+              if (fisura._raw) {
+                fisura._raw = { ...fisura._raw, fotoUrl: downloadUrl };
+              }
+            }
+            // Eliminar el objeto File en cualquier caso para evitar errores en Firestore
+            delete fisura.foto;
+            step3Updated.fisurasList[i] = fisura;
+          }
+        } catch (storageError) {
+          console.error('Error subiendo fotos a Storage (posible fallo de reglas o CORS):', storageError);
+          Toast.fire({ icon: 'warning', title: 'Las fotos no se pudieron subir a la nube. Guardando solo los datos de texto...' });
+          // Si falla, limpiar los archivos File para que Firestore no crashee
+          for (let i = 0; i < step3Updated.fisurasList.length; i++) {
+            delete step3Updated.fisurasList[i].foto;
+          }
+        }
+
+        // Guardar el objeto completo en Firestore sanitizando `undefined`
+        const cleanData = JSON.parse(JSON.stringify({
+          step1: step1Updated || {},
+          step2: formData.step2 || {},
+          step3: step3Updated || {},
+          step4: formData.step4 || {},
+          step5: formData.step5 || {},
+          step6: formData.step6 || {},
+        }));
+
+        const resumenVisual = {
+          alerta: {
+            color: valoracion?.color_final || 'Sin valoración',
+            titulo: valoracion?.titulo || '-',
+            dictamen: valoracion?.descripcion || '-',
+            recomendacion: valoracion?.recomendacion || '-',
+            olorAGas: olorAGas ? 'Sí' : 'No',
+            factoresIdentificados: factores || []
+          },
+          diligenciador: {
+            nombre: step1?.nombreDiligenciador || '-',
+            cedula: step1?.cedulaDiligenciador || '-',
+            telefono: step1?.telefonoDiligenciador || '-',
+            correo: step1?.correoDiligenciador || '-'
+          },
+          edificacion: {
+            direccion: `${step1?.direccion || '-'}, ${step1?.barrio || '-'}`,
+            vereda: step1?.vereda || '-',
+            municipio: step1?.municipio || '-',
+            pisosSotanos: `${step1?.numeroPisos || '-'} / ${step1?.numeroSotanos || '0'}`,
+            dimensiones: `${step1?.ancho || '-'}m x ${step1?.largo || '-'}m`,
+            anoConstruccion: step1?.anoConstruccion || '-',
+            usoActual: step1?.usoActual?.toUpperCase() || '-',
+            coordenadas: `${step1?.latitud || '-'}, ${step1?.longitud || '-'}`,
+            fotoFachadaUrl: step1Updated?.fotoFachadaUrl || 'Sin foto'
+          },
+          sistemaEstructural: {
+            sistemaElegido: step2?.tipoConstruccion?.replace(/_/g, ' ') || 'No definido',
+            tipoCubierta: step2?.tipoCubierta?.replace(/_/g, ' ').toUpperCase() || '-',
+            tipoPiso: step2?.tipoPiso?.replace(/_/g, ' ').toUpperCase() || '-'
+          },
+          fisuras: fichaCompleta.fisuras.map((f, i) => {
+            const col = clasificarFisura(f, fichaCompleta.sistema);
+            return {
+              numero: i + 1,
+              elemento: f.elemento,
+              tipo: f._raw?.tipo?.replace(/_/g, ' ') || 'Fisura',
+              tamano: getFisuraLabel(f.tamano),
+              evolucion: getFisuraLabel(f.evolucion),
+              acerosExpuestos: `${f.aceros} (Corrosión: ${f.corrosion})`,
+              nivelAlerta: col,
+              recomendacion: getRecomendacionFisura(col),
+              fotoUrl: f._raw?.fotoUrl || 'Sin foto'
+            };
+          }),
+          asentamiento: {
+            uniforme: fichaCompleta.asentamiento.uniforme,
+            diferencial: fichaCompleta.asentamiento.diferencial,
+            inclinacion: fichaCompleta.asentamiento.inclinacion,
+            localizado: fichaCompleta.asentamiento.localizado,
+            observaciones: step4?.observacionesAsentamiento || 'Ninguna'
+          },
+          suelo: {
+            deslizamiento: fichaCompleta.suelo.deslizamiento,
+            caidaRocas: fichaCompleta.suelo.caida_rocas,
+            licuefaccion: fichaCompleta.suelo.licuefaccion,
+            cimentacionExpuesta: fichaCompleta.suelo.cimentacion_expuesta,
+            observaciones: step5?.observacionesSuelo || 'Ninguna'
+          },
+          elementosNoEstructurales: {
+            fachadas: fichaCompleta.elementosNoEstructurales.fachadas.join(', ') || 'Sin daños',
+            puertas_ventanas: fichaCompleta.elementosNoEstructurales.puertas_ventanas.join(', ') || 'Sin daños',
+            pisos_cielorrasos: fichaCompleta.elementosNoEstructurales.pisos_cielorrasos.join(', ') || 'Sin daños',
+            muros_interiores: fichaCompleta.elementosNoEstructurales.muros_interiores.join(', ') || 'Sin daños',
+            instalaciones: fichaCompleta.elementosNoEstructurales.instalaciones.join(', ') || 'Sin daños',
+            cubiertas: fichaCompleta.elementosNoEstructurales.cubiertas.join(', ') || 'Sin daños',
+            sabeCantidadMuros: step6?.sabeCantidadMuros === 'si' ? 'Sí' : 'No',
+            cantidadTotalMuros: step6?.cantidadMuros || '-',
+            murosConDanos: step6?.murosDanos || '-'
+          }
+        };
+
+        const diagnosticoDoc = {
+          inspectorID: hashCC,
+          inspectorDocumento: String(userDoc).trim(),
+          fechaRegistro: serverTimestamp(),
+          valoracion: valoracion?.color_final || 'Sin valoración',
+          resumenVisual,
+          ...cleanData
+        };
+
+        console.log('Intentando guardar en Firestore...', diagnosticoDoc);
+        
+        // Guardar en una colección raíz 'diagnosticos' para escalabilidad absoluta
+        const diagnosticosRef = collection(db, 'diagnosticos');
+        await addDoc(diagnosticosRef, diagnosticoDoc);
+        
+        console.log('Guardado exitoso en Firestore.');
+        dbSuccess = true;
+      } catch (dbError) {
+        console.error('Error al guardar en Firestore/Storage:', dbError);
+        Toast.fire({ icon: 'warning', title: 'Error de conexión a la base de datos. Generando solo el PDF...' });
+      }
+
+      // --- 2. GENERAR Y DESCARGAR PDF LOCALMENTE ---
+      console.log('Iniciando generación de PDF...');
+      Toast.fire({ icon: 'info', title: 'Generando PDF, por favor espere...', timer: 3000 });
+
+      const node = pdfRef.current;
+      if (!node) {
+        console.error('Referencia del PDF no encontrada.');
+        throw new Error("Referencia del PDF no encontrada");
+      }
+
+      console.log('Creando instancia jsPDF...');
       const pdf = new jsPDF('p', 'mm', 'a4');
       const pdfWidth = pdf.internal.pageSize.getWidth();
       const pdfHeight = pdf.internal.pageSize.getHeight();
       const margin = 10;
       
       const blocks = Array.from(node.querySelectorAll('.pdf-block'));
-      if (blocks.length === 0) throw new Error("No se encontraron bloques para el PDF");
+      console.log('Bloques encontrados:', blocks.length);
+      if (blocks.length === 0) {
+        console.error('No se encontraron bloques pdf-block.');
+        throw new Error("No se encontraron bloques para el PDF");
+      }
 
       let currentY = margin;
       const containerRect = node.getBoundingClientRect();
       const scale = (pdfWidth - 2 * margin) / 794;
 
       for (let i = 0; i < blocks.length; i++) {
+        console.log(`Renderizando bloque ${i + 1}/${blocks.length}...`);
         const block = blocks[i];
-        
-        // Generar imagen de alta calidad del bloque
-        const dataUrl = await toJpeg(block, { 
-          quality: 0.98, 
-          pixelRatio: 2,
-          backgroundColor: '#ffffff',
-          style: { margin: '0' }
-        });
-
         const blockRect = block.getBoundingClientRect();
         const xOffset = blockRect.left - containerRect.left;
         
@@ -124,45 +277,44 @@ export default function ResumenForm() {
         const scaledWidth = block.offsetWidth * scale;
         const scaledHeight = block.offsetHeight * scale;
         
-        // Si el bloque no cabe en la página actual, saltar de página
         if (currentY + scaledHeight > pdfHeight - margin) {
           pdf.addPage();
           currentY = margin;
         }
 
-        pdf.addImage(dataUrl, 'JPEG', blockX, currentY, scaledWidth, scaledHeight, undefined, 'FAST');
+        try {
+          const dataUrl = await toJpeg(block, { 
+            quality: 0.98, 
+            pixelRatio: 2,
+            backgroundColor: '#ffffff',
+            style: { margin: '0' }
+          });
+          pdf.addImage(dataUrl, 'JPEG', blockX, currentY, scaledWidth, scaledHeight, undefined, 'FAST');
+        } catch (imgError) {
+          console.warn("Error renderizando un bloque del PDF:", imgError);
+          // Si falla, pintar un rectángulo gris para no detener la descarga del PDF
+          pdf.setFillColor(240, 240, 240);
+          pdf.rect(blockX, currentY, scaledWidth, scaledHeight, 'F');
+          pdf.setTextColor(150, 150, 150);
+          pdf.setFontSize(8);
+          pdf.text("Bloque no pudo ser renderizado", blockX + 5, currentY + 10);
+        }
         
-        // Separación vertical entre bloques en la misma página
         currentY += scaledHeight + (4 * scale); 
       }
 
-      // 2. Guardar el archivo localmente
+      console.log('Guardando archivo PDF...');
       pdf.save('morar.ok_Dictamen.pdf');
+      console.log('PDF guardado.');
 
-      /* ======== DESHABILITADO TEMPORALMENTE ========
-      // 3. Subir a Firebase Storage
-      const blob = pdf.output('blob');
-      const timestamp = new Date().getTime();
-      const hashCC = CryptoJS.SHA256(user.documento.trim()).toString(CryptoJS.enc.Hex);
-      const fileName = `dictamenes/${hashCC}/morar.ok_${timestamp}.pdf`;
-      const storageRef = ref(storage, fileName);
-      
-      Toast.fire({ icon: 'info', title: 'Subiendo copia a la nube...', timer: 2000 });
-      
-      await uploadBytes(storageRef, blob);
-      const downloadURL = await getDownloadURL(storageRef);
-
-      // 4. Actualizar Firestore
-      const userRef = doc(db, 'users', hashCC);
-      await updateDoc(userRef, {
-        pdfUrls: arrayUnion(downloadURL)
-      });
-      ================================================ */
-      
-      Toast.fire({ icon: 'success', title: 'PDF generado exitosamente.' });
+      if (dbSuccess) {
+        Toast.fire({ icon: 'success', title: 'Datos guardados y PDF exportado exitosamente.' });
+      } else {
+        Toast.fire({ icon: 'info', title: 'PDF generado localmente. Hubo un fallo al sincronizar con la nube.' });
+      }
     } catch (error) {
-      console.error('Error generando PDF o subiendo a Firebase:', error);
-      Toast.fire({ icon: 'error', title: 'Error al generar o subir PDF: ' + (error.message || 'Desconocido') });
+      console.error('Error Crítico Detallado:', error);
+      Toast.fire({ icon: 'error', title: 'Error: ' + (error.message || 'Desconocido') });
     } finally {
       setIsGenerating(false);
     }

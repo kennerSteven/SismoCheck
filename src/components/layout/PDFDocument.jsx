@@ -242,12 +242,11 @@ export const PDFDocument = React.forwardRef(({
               </div>
               {step1?.latitud && step1?.longitud ? (
                 <div className="w-full h-full relative flex flex-col items-center justify-center">
-                  <img
-                    src={`https://static-maps.yandex.ru/1.x/?lang=es-ES&ll=${step1.longitud},${step1.latitud}&z=17&l=map&size=600,450&pt=${step1.longitud},${step1.latitud},pm2rdm`}
-                    crossOrigin="anonymous"
-                    alt="Mapa"
-                    className="w-full h-full object-cover absolute inset-0 rounded-lg"
-                  />
+                  <div className="w-full h-full bg-slate-200 border border-slate-300 rounded-lg flex flex-col items-center justify-center p-6 text-center">
+                    <span className="text-3xl mb-2">📍</span>
+                    <span className="text-xs font-bold text-slate-600 uppercase tracking-widest mb-1">Ubicación GPS Capturada</span>
+                    <span className="text-[10px] text-slate-500">El mapa interactivo está disponible en la versión digital.</span>
+                  </div>
                   <div className="absolute bottom-4 right-4 bg-white/95 backdrop-blur-md border border-slate-200 px-4 py-2 rounded-lg text-xs font-black z-20 flex flex-col shadow-lg text-slate-700">
                     <span>LAT: {step1.latitud}</span>
                     <span>LNG: {step1.longitud}</span>
