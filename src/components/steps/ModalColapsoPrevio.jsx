@@ -25,7 +25,7 @@ export default function ModalColapsoPrevio() {
           </li>
           <li className="flex items-start gap-3">
             <Phone className="w-6 h-6 shrink-0 mt-0.5" />
-            Reporte esta condición a la entidad de gestión del riesgo o a los bomberos de su municipio.
+            Reporte esta condición a emergencias.
           </li>
           <li className="flex items-start gap-3">
             <Ban className="w-6 h-6 shrink-0 mt-0.5" />

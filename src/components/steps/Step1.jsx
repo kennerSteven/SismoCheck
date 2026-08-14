@@ -16,7 +16,7 @@ const step1Schema = z.object({
   cedulaDiligenciador: z.string().min(1, 'La cédula es obligatoria'),
   telefonoDiligenciador: z.string().min(1, 'El teléfono de contacto es obligatorio'),
   correoDiligenciador: z.string().email('Correo inválido').optional().or(z.literal('')),
-  direccion: z.string().min(1, 'La dirección es obligatoria'),
+  direccion: z.string().optional().or(z.literal('')),
   barrio: z.string().min(1, 'El barrio es obligatorio'),
   vereda: z.string().optional(),
   municipio: z.string().min(1, 'El municipio es obligatorio'),
@@ -235,7 +235,8 @@ export default function Step1({ onNext }) {
 
       {/* Dirección */}
       <div className="mb-5">
-        <label className="block text-xs font-bold text-slate-600 uppercase mb-1">DIRECCIÓN COMPLETA</label>
+        <label className="block text-xs font-bold text-slate-600 uppercase mb-0.5">DIRECCIÓN COMPLETA</label>
+        <span className="block text-[11px] text-slate-500 mb-1">Opcional. Si no conoce la dirección exacta, puede dejarlo en blanco o escribir "No sé".</span>
         <InputField 
           placeholder="Calle / Carrera / Nomenclatura"
           {...register('direccion')} 
@@ -280,6 +281,7 @@ export default function Step1({ onNext }) {
           <InputField 
             type="number" 
             placeholder="Ej. 2"
+            min="1"
             {...register('numeroPisos', { valueAsNumber: true })} 
             error={errors.numeroPisos} 
           />
@@ -290,6 +292,7 @@ export default function Step1({ onNext }) {
           <InputField 
             type="number" 
             placeholder="Ej. 0"
+            min="0"
             {...register('numeroSotanos', { valueAsNumber: true })} 
             error={errors.numeroSotanos} 
           />
@@ -298,37 +301,38 @@ export default function Step1({ onNext }) {
 
       {/* Dimensiones */}
       <div className="mb-5">
-        <label className="block text-xs font-bold text-slate-600 uppercase mb-1.5">DIMENSIONES APROXIMADAS DEL PREDIO O EDIFICACIÓN</label>
-        <div className="flex flex-col gap-4">
-          <div>
+        <label className="block text-[11px] font-mono text-slate-600 uppercase tracking-widest mb-2">DIMENSIONES DE LA CONSTRUCCIÓN, EN PASOS</label>
+        <div className="flex items-center gap-3 w-full">
+          <div className="flex-1 flex flex-col">
             <InputField 
-              type="number" step="0.01"
-              placeholder="Ancho (m o pasos)"
+              type="number" step="1" min="0"
+              placeholder="Pasos de frente"
               {...register('ancho', { valueAsNumber: true })} 
               error={errors.ancho} 
             />
             {!Number.isNaN(anchoVal) && anchoVal > 0 && (
-              <span className="block text-[11px] text-blue-600 mt-1.5 font-medium ml-2">
-                Si son pasos: aprox. {(anchoVal * 0.75).toFixed(2)} m
+              <span className="block text-[11px] text-[#1F3B5F] mt-1 font-medium ml-1">
+                ≈ {(anchoVal * 0.75).toFixed(1)} m
               </span>
             )}
           </div>
-          <div>
+          <span className="text-slate-400 font-mono text-lg font-bold self-start mt-3">×</span>
+          <div className="flex-1 flex flex-col">
             <InputField 
-              type="number" step="0.01"
-              placeholder="Largo (m o pasos)"
+              type="number" step="1" min="0"
+              placeholder="Pasos de fondo"
               {...register('largo', { valueAsNumber: true })} 
               error={errors.largo} 
             />
             {!Number.isNaN(largoVal) && largoVal > 0 && (
-              <span className="block text-[11px] text-blue-600 mt-1.5 font-medium ml-2">
-                Si son pasos: aprox. {(largoVal * 0.75).toFixed(2)} m
+              <span className="block text-[11px] text-[#1F3B5F] mt-1 font-medium ml-1">
+                ≈ {(largoVal * 0.75).toFixed(1)} m
               </span>
             )}
           </div>
         </div>
-        <span className="block text-[11px] text-slate-500 mt-3">
-          Ancho y largo total de la construcción. Puede medir a pasos si no tiene cinta métrica (1 paso = 0,75 m).
+        <span className="block text-[11px] text-slate-500 mt-2">
+          Camine de borde a borde contando los pasos para cada lado de la construcción.
         </span>
       </div>
 
@@ -338,6 +342,7 @@ export default function Step1({ onNext }) {
           <label className="block text-xs font-bold text-slate-600 uppercase mb-1">AÑO APROXIMADO DE CONSTRUCCIÓN</label>
           <InputField 
             type="number"
+            min="1800"
             placeholder="Ej. 1998"
             {...register('anoConstruccion', { valueAsNumber: true })} 
             error={errors.anoConstruccion} 

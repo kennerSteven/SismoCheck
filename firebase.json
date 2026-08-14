@@ -1,6 +1,6 @@
 {
   "hosting": {
-    "site": "sismocheck2026",
+    "site": "morar-ok",
     "public": "dist",
     "ignore": [
       "firebase.json",

@@ -137,14 +137,14 @@ export default function ResumenForm() {
       }
 
       // 2. Guardar el archivo localmente
-      pdf.save('SismoCheck_Dictamen.pdf');
+      pdf.save('morar.ok_Dictamen.pdf');
 
       /* ======== DESHABILITADO TEMPORALMENTE ========
       // 3. Subir a Firebase Storage
       const blob = pdf.output('blob');
       const timestamp = new Date().getTime();
       const hashCC = CryptoJS.SHA256(user.documento.trim()).toString(CryptoJS.enc.Hex);
-      const fileName = `dictamenes/${hashCC}/SismoCheck_${timestamp}.pdf`;
+      const fileName = `dictamenes/${hashCC}/morar.ok_${timestamp}.pdf`;
       const storageRef = ref(storage, fileName);
       
       Toast.fire({ icon: 'info', title: 'Subiendo copia a la nube...', timer: 2000 });
@@ -252,6 +252,14 @@ export default function ResumenForm() {
         
         <div ref={contentRef} className="space-y-8 bg-white p-2 print:p-0" id="resumen-content">
           <FormHeader />
+          
+          {/* DISCLAIMER MOVIDO AL PRINCIPIO */}
+          <div className="mb-6 text-xs leading-relaxed text-justify p-4 rounded-xl border border-slate-200 bg-white text-slate-600 shadow-sm">
+            <strong className="block mb-1 text-sm font-bold text-slate-800">⚠ Aviso importante</strong>
+            Esta valoración es un resultado orientativo, calculado automáticamente a partir de lo registrado en esta ficha (lesiones, asentamientos, suelo y elementos no estructurales). Se basa en criterios generales de clasificación por colores utilizados en evaluaciones rápidas de construcciones (verde / amarillo / naranja / rojo), como una primera aproximación al estado de la edificación.<br/><br/>
+            Este resultado no reemplaza la visita, el análisis detallado mediante ensayos destructivos y no destructivos de acuerdo al sistema constructivo en particular; tampoco constituye estrictamente un estudio de vulnerabilidad sísmica, ni el diagnóstico profesional de un ingeniero o arquitecto habilitado, quien es el único profesional autorizado para determinar oficialmente la habitabilidad de la construcción. No obstante, si usted ha seguido todos los pasos, este es un registro completo que le servirá como primer insumo para un diagnóstico profesional.
+          </div>
+
           {/* BANNER DINÁMICO */}
           <div className={`p-6 md:p-8 rounded-2xl border-l-8 border-y-2 border-r-2 ${styles.border} ${styles.bg} shadow-sm relative`}>
           <div className="flex items-center space-x-3 mb-2">
@@ -282,7 +290,7 @@ export default function ResumenForm() {
             </ul>
           </div>
 
-        </div>
+          </div>
 
         {/* SECCIONES DE DATOS */}
         <div className="bg-white rounded-2xl border-2 border-gray-100 p-5 md:p-8 shadow-sm">
@@ -434,7 +442,7 @@ export default function ResumenForm() {
               <>
                 <Row label="¿Sabe cuántos muros tiene?" value="Sí" />
                 <Row label="Cantidad total de muros" value={step6?.cantidadMuros || '-'} />
-                <Row label="Muros con daños severos" value={step6?.murosDanos || '-'} />
+                <Row label="Muros con daños" value={step6?.murosDanos || '-'} />
               </>
             )}
             {step6?.sabeCantidadMuros === 'no' && (

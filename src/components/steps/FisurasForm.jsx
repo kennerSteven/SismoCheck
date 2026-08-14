@@ -20,12 +20,62 @@ const getSistemaGrupo = (tipoConstruccion) => {
 
 // --- DICCIONARIOS DE DATOS ---
 const ELEMENTO_OPTIONS_ALL = [
-  { id: 'Columna', label: 'Columna' },
-  { id: 'Viga', label: 'Viga' },
-  { id: 'Muro', label: 'Muro / Panel' },
-  { id: 'Escaleras', label: 'Escaleras' },
-  { id: 'Piso', label: 'Piso' },
-  { id: 'Techo', label: 'Techo / Cubierta' },
+  { 
+    id: 'Columna', 
+    label: 'Columna',
+    icon: (
+      <svg width="48" height="48" viewBox="0 0 24 24" fill="#1F3B5F">
+        <path d="M7 4h10v3H7V4zm3 3h4v10h-4V7zm-3 10h10v3H7v-3z" />
+      </svg>
+    )
+  },
+  { 
+    id: 'Viga', 
+    label: 'Viga',
+    icon: (
+      <svg width="48" height="48" viewBox="0 0 24 24" fill="#1F3B5F">
+        <path d="M4 8h3v8H4V8zm3 3h10v2H7v-2zm10-3h3v8h-3V8z" />
+      </svg>
+    )
+  },
+  { 
+    id: 'Muro', 
+    label: 'Muro',
+    icon: (
+      <svg width="48" height="48" viewBox="0 0 24 24" fill="#CF895C">
+        <path d="M4 6h16v2H4V6zm0 3h7v2H4V9zm8 0h8v2h-8V9zm-8 3h16v2H4v-2zm0 3h7v2H4v-2zm8 0h8v2h-8v-2z" />
+      </svg>
+    )
+  },
+  { 
+    id: 'Escaleras', 
+    label: 'Escaleras',
+    icon: (
+      <svg width="48" height="48" viewBox="0 0 24 24" fill="#1F3B5F">
+        <path d="M6 18h12v-3h-3v-3h-3V9H9V6H6v12z" />
+      </svg>
+    )
+  },
+  { 
+    id: 'Piso', 
+    label: 'Piso',
+    icon: (
+      <svg width="48" height="48" viewBox="0 0 24 24" fill="none">
+        <rect x="5" y="14" width="14" height="3" fill="#CBB696" stroke="#908068" strokeWidth="1" />
+        <path d="M6 14l-2 -3M10 14l-2 -3M14 14l-2 -3M18 14l-2 -3" stroke="#908068" strokeWidth="1" strokeLinecap="round" />
+      </svg>
+    )
+  },
+  { 
+    id: 'Techo', 
+    label: 'Techo',
+    icon: (
+      <svg width="48" height="48" viewBox="0 0 24 24" fill="none">
+        <rect x="5" y="7" width="14" height="3" fill="#D3CEBB" stroke="#8E8B79" strokeWidth="1" />
+        <path d="M6 10l-2 3M10 10l-2 3M14 10l-2 3M18 10l-2 3" stroke="#8E8B79" strokeWidth="1" strokeLinecap="round" />
+      </svg>
+    )
+  },
 ];
 
 const ELEMENTO_MAPPING = {
@@ -276,13 +326,14 @@ export default function FisurasForm({ onNext }) {
                   <div 
                     key={opt.id}
                     onClick={() => selectOption('elemento', opt.id)}
-                    className={`border-2 rounded-xl p-5 flex flex-col items-center justify-center text-center cursor-pointer transition-colors ${
+                    className={`border-2 rounded-xl p-5 py-8 flex flex-col items-center justify-center text-center cursor-pointer transition-colors ${
                       tempFisura.elemento === opt.id
-                        ? 'border-[#1F3B5F] bg-blue-50'
-                        : 'border-slate-100 hover:border-[#1F3B5F] hover:bg-slate-50'
+                        ? 'border-[#1F3B5F] bg-blue-50/50'
+                        : 'border-slate-200 hover:border-[#1F3B5F] hover:bg-slate-50'
                     }`}
                   >
-                    <span className="font-bold text-sm text-slate-700">{opt.label}</span>
+                    {opt.icon && <div className="mb-4">{opt.icon}</div>}
+                    <span className="font-extrabold text-sm text-slate-800">{opt.label}</span>
                   </div>
                 ))}
               </div>
@@ -402,7 +453,11 @@ export default function FisurasForm({ onNext }) {
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-slate-600 uppercase mb-3">¿SE VEN ACEROS (VARILLAS / PERFILES) EXPUESTOS CERCA DEL DAÑO?</label>
+                <label className="block text-[11px] font-mono text-slate-600 uppercase tracking-widest mb-3">
+                  {grupoEstructural === 'madera' 
+                    ? '¿SE ESCUCHAN CHASQUIDOS, CHIRRIDOS O CRUJIDOS EN ESTA PIEZA DE MADERA?'
+                    : '¿SE VEN ACEROS (VARILLAS / PERFILES) EXPUESTOS CERCA DEL DAÑO?'}
+                </label>
                 <div className="grid grid-cols-3 gap-4">
                   {ACEROS_OPTIONS.map(opt => (
                     <div 

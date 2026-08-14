@@ -22,16 +22,16 @@ const Section = ({ title, children, cols = 12, className = '' }) => (
   </div>
 );
 
-export const PDFDocument = React.forwardRef(({ 
-  fichaCompleta, 
-  valoracion, 
-  olorAGas, 
-  step1, 
-  step2, 
-  step4, 
-  step5, 
+export const PDFDocument = React.forwardRef(({
+  fichaCompleta,
+  valoracion,
+  olorAGas,
+  step1,
+  step2,
+  step4,
+  step5,
   step6,
-  factores 
+  factores
 }, ref) => {
   const { color_final } = valoracion;
   const styles = getColorStyles(color_final);
@@ -40,7 +40,7 @@ export const PDFDocument = React.forwardRef(({
 
   return (
     <div ref={ref} className="w-[794px] bg-slate-50 text-slate-900 font-sans mx-auto box-border" style={{ fontFamily: 'Inter, Arial, sans-serif' }}>
-      
+
       {/* ================= MAIN CONTENT ================= */}
       <div className="p-8 box-border relative flex flex-col gap-1">
         {/* LOGO SUPERIOR */}
@@ -59,12 +59,19 @@ export const PDFDocument = React.forwardRef(({
           </div>
           <div className="flex-1 ml-8 text-right">
             <h1 className="text-xl font-black text-[#1F3B5F] uppercase tracking-tight leading-tight">
-              DICTAMEN TÉCNICO DE<br/>INSPECCIÓN POST-SISMO
+              DICTAMEN TÉCNICO DE<br />INSPECCIÓN POST-SISMO
             </h1>
             <div className="mt-2 inline-block bg-slate-100 text-slate-600 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider">
               {new Date().toLocaleDateString('es-CO', { year: 'numeric', month: 'long', day: 'numeric' })}
             </div>
           </div>
+        </div>
+
+        {/* DISCLAIMER MOVIDO AL PRINCIPIO */}
+        <div className="mb-4 text-[9px] leading-relaxed text-justify p-4 rounded-xl border border-slate-200 bg-white text-slate-600 pdf-block shadow-sm">
+          <strong className="block mb-1 text-[10px] text-slate-800 font-bold">⚠ Aviso importante</strong>
+          Esta valoración es un resultado orientativo, calculado automáticamente a partir de lo registrado en esta ficha (lesiones, asentamientos, suelo y elementos no estructurales). Se basa en criterios generales de clasificación por colores utilizados en evaluaciones rápidas de construcciones (verde / amarillo / naranja / rojo), como una primera aproximación al estado de la edificación.<br /><br />
+          Este resultado no reemplaza la visita, el análisis detallado mediante ensayos destructivos y no destructivos de acuerdo al sistema constructivo en particular; tampoco constituye estrictamente un estudio de vulnerabilidad sísmica, ni el diagnóstico profesional de un ingeniero o arquitecto habilitado, quien es el único profesional autorizado para determinar oficialmente la habitabilidad de la construcción. No obstante, si usted ha seguido todos los pasos, este es un registro completo que le servirá como primer insumo para un diagnóstico profesional.
         </div>
 
         {/* 1. DATOS DE QUIEN DILIGENCIA */}
@@ -137,35 +144,35 @@ export const PDFDocument = React.forwardRef(({
             )}
           </div>
         </div>
-        
+
         {/* Page break before next section */}
         <div className="html2pdf__page-break"></div>
-        
+
         {/* 5. ASENTAMIENTO Y SUELO */}
         <Section title="TERRENO: ASENTAMIENTO E INCLINACIÓN Y EVALUACIÓN DEL SUELO" cols={12}>
           <div className="col-span-6 border-r border-slate-100 p-4">
             <h4 className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-3 border-b border-slate-100 pb-1">Asentamiento e Inclinación</h4>
             <div className="space-y-2">
-              <div className="flex justify-between items-center text-xs"><span className="text-slate-600">Asentamiento uniforme (parejo)</span> <span className={`font-bold px-2 py-0.5 rounded-full ${fichaCompleta.asentamiento.uniforme ? 'bg-red-100 text-red-700' : 'bg-slate-100 text-slate-700'}`}>{fichaCompleta.asentamiento.uniforme ? 'SÍ' : 'NO'}</span></div>
-              <div className="flex justify-between items-center text-xs"><span className="text-slate-600">Asentamiento diferencial (disparejo)</span> <span className={`font-bold px-2 py-0.5 rounded-full ${fichaCompleta.asentamiento.diferencial ? 'bg-red-100 text-red-700' : 'bg-slate-100 text-slate-700'}`}>{fichaCompleta.asentamiento.diferencial ? 'SÍ' : 'NO'}</span></div>
-              <div className="flex justify-between items-center text-xs"><span className="text-slate-600">Inclinación general</span> <span className={`font-bold px-2 py-0.5 rounded-full ${fichaCompleta.asentamiento.inclinacion ? 'bg-red-100 text-red-700' : 'bg-slate-100 text-slate-700'}`}>{fichaCompleta.asentamiento.inclinacion ? 'SÍ' : 'NO'}</span></div>
-              <div className="flex justify-between items-center text-xs"><span className="text-slate-600">Hundimiento localizado</span> <span className={`font-bold px-2 py-0.5 rounded-full ${fichaCompleta.asentamiento.localizado ? 'bg-red-100 text-red-700' : 'bg-slate-100 text-slate-700'}`}>{fichaCompleta.asentamiento.localizado ? 'SÍ' : 'NO'}</span></div>
+              <div className="flex justify-between items-center text-xs"><span className="text-slate-600">Asentamiento uniforme (parejo)</span> <span className={`font-bold px-2 py-0.5 rounded-full ${fichaCompleta.asentamiento.uniforme === 'Sí' ? 'bg-red-100 text-red-700' : 'bg-slate-100 text-slate-700'}`}>{fichaCompleta.asentamiento.uniforme.toUpperCase()}</span></div>
+              <div className="flex justify-between items-center text-xs"><span className="text-slate-600">Asentamiento diferencial (disparejo)</span> <span className={`font-bold px-2 py-0.5 rounded-full ${fichaCompleta.asentamiento.diferencial === 'Sí' ? 'bg-red-100 text-red-700' : 'bg-slate-100 text-slate-700'}`}>{fichaCompleta.asentamiento.diferencial.toUpperCase()}</span></div>
+              <div className="flex justify-between items-center text-xs"><span className="text-slate-600">Inclinación general</span> <span className={`font-bold px-2 py-0.5 rounded-full ${fichaCompleta.asentamiento.inclinacion === 'Sí' ? 'bg-red-100 text-red-700' : 'bg-slate-100 text-slate-700'}`}>{fichaCompleta.asentamiento.inclinacion.toUpperCase()}</span></div>
+              <div className="flex justify-between items-center text-xs"><span className="text-slate-600">Hundimiento localizado</span> <span className={`font-bold px-2 py-0.5 rounded-full ${fichaCompleta.asentamiento.localizado === 'Sí' ? 'bg-red-100 text-red-700' : 'bg-slate-100 text-slate-700'}`}>{fichaCompleta.asentamiento.localizado.toUpperCase()}</span></div>
             </div>
             <div className="mt-3 bg-slate-50 p-3 rounded-lg border border-slate-100 text-[10px] text-slate-600">
-              <strong className="text-slate-800 uppercase block mb-1">Observaciones:</strong> 
+              <strong className="text-slate-800 uppercase block mb-1">Observaciones:</strong>
               {step4?.observacionesAsentamiento || 'Ninguna'}
             </div>
           </div>
           <div className="col-span-6 p-4">
             <h4 className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-3 border-b border-slate-100 pb-1">Evaluación del Suelo</h4>
             <div className="space-y-2">
-              <div className="flex justify-between items-center text-xs"><span className="text-slate-600">Deslizamiento de tierras</span> <span className={`font-bold px-2 py-0.5 rounded-full ${fichaCompleta.suelo.deslizamiento ? 'bg-red-100 text-red-700' : 'bg-slate-100 text-slate-700'}`}>{fichaCompleta.suelo.deslizamiento ? 'SÍ' : 'NO'}</span></div>
-              <div className="flex justify-between items-center text-xs"><span className="text-slate-600">Caída de rocas</span> <span className={`font-bold px-2 py-0.5 rounded-full ${fichaCompleta.suelo.caida_rocas ? 'bg-red-100 text-red-700' : 'bg-slate-100 text-slate-700'}`}>{fichaCompleta.suelo.caida_rocas ? 'SÍ' : 'NO'}</span></div>
-              <div className="flex justify-between items-center text-xs"><span className="text-slate-600">Licuefacción</span> <span className={`font-bold px-2 py-0.5 rounded-full ${fichaCompleta.suelo.licuefaccion ? 'bg-red-100 text-red-700' : 'bg-slate-100 text-slate-700'}`}>{fichaCompleta.suelo.licuefaccion ? 'SÍ' : 'NO'}</span></div>
-              <div className="flex justify-between items-center text-xs"><span className="text-slate-600">Cimentación expuesta</span> <span className={`font-bold px-2 py-0.5 rounded-full ${fichaCompleta.suelo.cimentacion_expuesta ? 'bg-red-100 text-red-700' : 'bg-slate-100 text-slate-700'}`}>{fichaCompleta.suelo.cimentacion_expuesta ? 'SÍ' : 'NO'}</span></div>
+              <div className="flex justify-between items-center text-xs"><span className="text-slate-600">Deslizamiento de tierras</span> <span className={`font-bold px-2 py-0.5 rounded-full ${fichaCompleta.suelo.deslizamiento === 'Sí' ? 'bg-red-100 text-red-700' : 'bg-slate-100 text-slate-700'}`}>{fichaCompleta.suelo.deslizamiento.toUpperCase()}</span></div>
+              <div className="flex justify-between items-center text-xs"><span className="text-slate-600">Caída de rocas</span> <span className={`font-bold px-2 py-0.5 rounded-full ${fichaCompleta.suelo.caida_rocas === 'Sí' ? 'bg-red-100 text-red-700' : 'bg-slate-100 text-slate-700'}`}>{fichaCompleta.suelo.caida_rocas.toUpperCase()}</span></div>
+              <div className="flex justify-between items-center text-xs"><span className="text-slate-600">Licuefacción</span> <span className={`font-bold px-2 py-0.5 rounded-full ${fichaCompleta.suelo.licuefaccion === 'Sí' ? 'bg-red-100 text-red-700' : 'bg-slate-100 text-slate-700'}`}>{fichaCompleta.suelo.licuefaccion.toUpperCase()}</span></div>
+              <div className="flex justify-between items-center text-xs"><span className="text-slate-600">Cimentación expuesta</span> <span className={`font-bold px-2 py-0.5 rounded-full ${fichaCompleta.suelo.cimentacion_expuesta === 'Sí' ? 'bg-red-100 text-red-700' : 'bg-slate-100 text-slate-700'}`}>{fichaCompleta.suelo.cimentacion_expuesta.toUpperCase()}</span></div>
             </div>
             <div className="mt-3 bg-slate-50 p-3 rounded-lg border border-slate-100 text-[10px] text-slate-600">
-              <strong className="text-slate-800 uppercase block mb-1">Observaciones:</strong> 
+              <strong className="text-slate-800 uppercase block mb-1">Observaciones:</strong>
               {step5?.observacionesSuelo || 'Ninguna'}
             </div>
           </div>
@@ -180,7 +187,7 @@ export const PDFDocument = React.forwardRef(({
           <Cell label="Instalaciones" value={fichaCompleta.elementosNoEstructurales.instalaciones.join(', ') || 'Sin daños'} colSpan={6} />
           <Cell label="Cubiertas" value={fichaCompleta.elementosNoEstructurales.cubiertas.join(', ') || 'Sin daños'} colSpan={6} />
           {step6?.sabeTotalMuros === 'si' ? (
-            <Cell label="Cantidad total de muros / Con daños severos" value={`${step6.totalMuros} / ${step6.murosConDanos}`} colSpan={12} />
+            <Cell label="Cantidad total de muros / Con daños " value={`${step6.totalMuros} / ${step6.murosConDanos}`} colSpan={12} />
           ) : (
             <Cell label="¿Sabe cuántos muros tiene?" value="No" colSpan={12} />
           )}
@@ -213,51 +220,51 @@ export const PDFDocument = React.forwardRef(({
 
         {/* Page break before EVIDENCIA */}
         <div className="html2pdf__page-break"></div>
-        
+
         {/* 8. EVIDENCIA */}
         <Section title="EVIDENCIA GRÁFICA Y GEORREFERENCIACIÓN" cols={12}>
           <div className="col-span-12 grid grid-cols-1 gap-6 p-6">
             <div className="border-2 border-dashed border-slate-200 rounded-xl flex flex-col items-center justify-center relative p-4 h-96 bg-white overflow-hidden">
-               <div className="absolute top-4 left-4 bg-white/90 backdrop-blur-sm border border-slate-200 px-4 py-2 rounded-full z-10 shadow-sm">
-                 <span className="text-xs font-bold uppercase text-slate-700">Fotografía de Fachada</span>
-               </div>
-               {step1?.fotoFachadaUrl ? (
-                 <img src={step1.fotoFachadaUrl} alt="Fachada" className="w-full h-full object-contain rounded-lg" />
-               ) : (
-                 <div className="flex flex-col items-center gap-1 text-slate-300">
-                   <span className="text-xs font-medium uppercase tracking-widest">No suministrada</span>
-                 </div>
-               )}
+              <div className="absolute top-4 left-4 bg-white/90 backdrop-blur-sm border border-slate-200 px-4 py-2 rounded-full z-10 shadow-sm">
+                <span className="text-xs font-bold uppercase text-slate-700">Fotografía de Fachada</span>
+              </div>
+              {step1?.fotoFachadaUrl ? (
+                <img src={step1.fotoFachadaUrl} alt="Fachada" className="w-full h-full object-contain rounded-lg" />
+              ) : (
+                <div className="flex flex-col items-center gap-1 text-slate-300">
+                  <span className="text-xs font-medium uppercase tracking-widest">No suministrada</span>
+                </div>
+              )}
             </div>
             <div className="border-2 border-slate-200 rounded-xl flex flex-col items-center justify-center relative p-2 h-96 bg-slate-100 overflow-hidden">
-               <div className="absolute top-4 left-4 bg-white/90 backdrop-blur-sm border border-slate-200 px-4 py-2 rounded-full z-10 shadow-sm">
-                 <span className="text-xs font-bold uppercase text-slate-700">Ubicación GPS</span>
-               </div>
-               {step1?.latitud && step1?.longitud ? (
-                  <div className="w-full h-full relative flex flex-col items-center justify-center">
-                    <img 
-                      src={`https://static-maps.yandex.ru/1.x/?lang=es-ES&ll=${step1.longitud},${step1.latitud}&z=17&l=map&size=600,450&pt=${step1.longitud},${step1.latitud},pm2rdm`} 
-                      crossOrigin="anonymous" 
-                      alt="Mapa" 
-                      className="w-full h-full object-cover absolute inset-0 rounded-lg" 
-                    />
-                    <div className="absolute bottom-4 right-4 bg-white/95 backdrop-blur-md border border-slate-200 px-4 py-2 rounded-lg text-xs font-black z-20 flex flex-col shadow-lg text-slate-700">
-                      <span>LAT: {step1.latitud}</span>
-                      <span>LNG: {step1.longitud}</span>
-                    </div>
+              <div className="absolute top-4 left-4 bg-white/90 backdrop-blur-sm border border-slate-200 px-4 py-2 rounded-full z-10 shadow-sm">
+                <span className="text-xs font-bold uppercase text-slate-700">Ubicación GPS</span>
+              </div>
+              {step1?.latitud && step1?.longitud ? (
+                <div className="w-full h-full relative flex flex-col items-center justify-center">
+                  <img
+                    src={`https://static-maps.yandex.ru/1.x/?lang=es-ES&ll=${step1.longitud},${step1.latitud}&z=17&l=map&size=600,450&pt=${step1.longitud},${step1.latitud},pm2rdm`}
+                    crossOrigin="anonymous"
+                    alt="Mapa"
+                    className="w-full h-full object-cover absolute inset-0 rounded-lg"
+                  />
+                  <div className="absolute bottom-4 right-4 bg-white/95 backdrop-blur-md border border-slate-200 px-4 py-2 rounded-lg text-xs font-black z-20 flex flex-col shadow-lg text-slate-700">
+                    <span>LAT: {step1.latitud}</span>
+                    <span>LNG: {step1.longitud}</span>
                   </div>
-               ) : (
-                 <div className="flex flex-col items-center gap-1 text-slate-400">
-                   <span className="text-xs font-medium uppercase tracking-widest">Sin Coordenadas</span>
-                 </div>
-               )}
+                </div>
+              ) : (
+                <div className="flex flex-col items-center gap-1 text-slate-400">
+                  <span className="text-xs font-medium uppercase tracking-widest">Sin Coordenadas</span>
+                </div>
+              )}
             </div>
           </div>
         </Section>
-        
+
         {/* FOOTER */}
-        <div className="mt-8 text-center border-t border-slate-200 pt-4 pb-4 pdf-block">
-          <span className="text-[10px] text-slate-400 font-medium">Dictamen Generado por SismoCheck — Desarrollado por Qatro y Controller.</span>
+        <div className="mt-6 text-center border-t border-slate-200 pt-4 pb-4 pdf-block">
+          <span className="text-[10px] text-slate-400 font-medium">Dictamen Generado por morar.ok — Desarrollado por Qatro y Controller.</span>
         </div>
       </div>
 

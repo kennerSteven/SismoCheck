@@ -33,7 +33,7 @@ export function PrivacyPolicyModal({ isOpen, onClose }) {
           <p className="mt-4 text-slate-600">La presente política se establece de conformidad con la Ley 1581 de 2012 y las demás normas colombianas aplicables en materia de protección de datos personales.</p>
 
           <h3 className="text-lg font-bold text-slate-900 mt-8 mb-3">2. Datos personales que recopilamos</h3>
-          <p className="text-slate-600">Para el funcionamiento de la plataforma SismoCheck podremos recopilar y almacenar información proporcionada directamente por el usuario, incluyendo:</p>
+          <p className="text-slate-600">Para el funcionamiento de la plataforma morar.ok podremos recopilar y almacenar información proporcionada directamente por el usuario, incluyendo:</p>
           <ul className="list-disc pl-5 space-y-3 mt-2 text-slate-600">
             <li>Nombre y apellidos, y número de documento de identidad del evaluador.</li>
             <li>Información necesaria para la autenticación y gestión de la sesión.</li>
