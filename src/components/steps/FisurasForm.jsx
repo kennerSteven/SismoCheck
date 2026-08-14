@@ -1,48 +1,137 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import useFormStore from '../../store/useFormStore';
-import CustomButton from '../ui/CustomButton';
+import { DangerConfirmModal } from '../../utils/alerts';
+
+const imageModules = import.meta.glob('../../assets/fotos/**/*.png', { eager: true });
+const allImages = Object.fromEntries(
+  Object.entries(imageModules).map(([path, mod]) => [path, mod.default || mod])
+);
+
+// --- FUNCIONES DE GRUPO ---
+const getSistemaGrupo = (tipoConstruccion) => {
+  if (['construccion_tradicional', 'construccion_palafitica', 'madera_portante'].includes(tipoConstruccion)) return 'madera';
+  if (['estructura_metalica'].includes(tipoConstruccion)) return 'metal';
+  if (['construccion_prefabricada'].includes(tipoConstruccion)) return 'prefab';
+  return 'concreto'; // muros_concreto, mamposteria_*, otro_mixto
+};
 
 // --- DICCIONARIOS DE DATOS ---
-const ELEMENTO_OPTIONS = [
-  { id: 'columna', label: 'Columna' },
-  { id: 'viga', label: 'Viga' },
-  { id: 'muro', label: 'Muro' },
-  { id: 'escaleras', label: 'Escaleras' },
-  { id: 'piso', label: 'Piso' },
-  { id: 'techo', label: 'Techo' },
+const ELEMENTO_OPTIONS_ALL = [
+  { id: 'Columna', label: 'Columna' },
+  { id: 'Viga', label: 'Viga' },
+  { id: 'Muro', label: 'Muro / Panel' },
+  { id: 'Escaleras', label: 'Escaleras' },
+  { id: 'Piso', label: 'Piso' },
+  { id: 'Techo', label: 'Techo / Cubierta' },
 ];
 
-const TIPO_OPTIONS = [
-  { id: 'vertical', label: 'Vertical' },
-  { id: 'horizontal', label: 'Horizontal' },
-  { id: 'diagonal', label: 'Diagonal' },
-  { id: 'escalonada', label: 'Escalonada' },
-  { id: 'cruzadas', label: 'Cruzadas (en X)' },
-  { id: 'telarana', label: 'Tipo telaraña' },
-  { id: 'panete', label: 'Solo en el pañete/acabado' },
+const ELEMENTO_MAPPING = {
+  concreto: {
+    Columna: 'Columnas',
+    Viga: 'Vigas',
+    Muro: 'Muros',
+    Escaleras: 'Escaleras',
+    Piso: 'Pisos',
+    Techo: 'Techos'
+  },
+  madera: {
+    Columna: 'Columnas_pilotes',
+    Viga: 'Vigas',
+    Muro: 'Muros_paneles',
+    Piso: 'Pisos_madera',
+    Techo: 'Cubierta_madera'
+  },
+  metal: {
+    Columna: 'Columnas',
+    Viga: 'Vigas',
+    Muro: 'Paneles_cerramientos',
+    Techo: 'Cerchas_cubierta'
+  }
+};
+
+const TIPO_OPTIONS_CONCRETO = [
+  { id: 'vertical', label: 'Vertical', match: 'Fisura_vertical' },
+  { id: 'horizontal', label: 'Horizontal', match: 'Fisura_horizontal' },
+  { id: 'diagonal', label: 'Diagonal', match: 'Fisura_diagonal' },
+  { id: 'escalonada', label: 'Escalonada', match: 'Fisura_escalonada' },
+  { id: 'cruzadas', label: 'Cruzadas (en X)', match: 'Fisuras_cruzadas_X' },
+  { id: 'telarana', label: 'Tipo telaraña', match: 'Fisuras_tipo_telarana' },
+  { id: 'panete', label: 'Solo en el pañete/acabado', match: 'Grieta_panete_acabado' },
 ];
 
+const TIPO_OPTIONS_MADERA = [
+  { id: 'torcedura', label: 'Torcedura', match: 'Torcedura' },
+  { id: 'rajadura', label: 'Rajadura', match: 'Rajadura' },
+  { id: 'hueco', label: 'Hueco', match: 'Hueco' },
+  { id: 'horizontal_cortante', label: 'Fisura horizontal (cortante)', match: 'Fisura_horizontal_cortante' },
+  { id: 'diagonal_cortante', label: 'Fisura diagonal (cortante)', match: 'Fisura_diagonal_cortante' },
+];
+
+const TIPO_OPTIONS_METAL = [
+  { id: 'torcedura', label: 'Torcedura', match: 'Torcedura' },
+  { id: 'corrosion', label: 'Corrosión u óxido', match: 'Corrosion_oxido' },
+  { id: 'abolladura', label: 'Abolladura', match: 'Abolladura' },
+  { id: 'desplome', label: 'Desplome', match: 'Desplome' },
+  { id: 'separacion', label: 'Separación piso-techo', match: 'Separacion_piso_techo' },
+  { id: 'falla_uniones', label: 'Falla en uniones o soldaduras', match: 'Falla_uniones_soldaduras' },
+];
+
+const TIPO_OPTIONS_PREFAB = [
+  ...TIPO_OPTIONS_CONCRETO,
+  { id: 'separacion_paneles', label: 'Separación entre paneles', match: 'Separacion_paneles' }
+];
+
+const getTipoList = (grupo) => {
+  if (grupo === 'madera') return TIPO_OPTIONS_MADERA;
+  if (grupo === 'metal') return TIPO_OPTIONS_METAL;
+  if (grupo === 'prefab') return TIPO_OPTIONS_PREFAB;
+  return TIPO_OPTIONS_CONCRETO;
+};
+
+const getFisuraImage = (grupo, elementoId, tipoMatch) => {
+  if (grupo === 'prefab') grupo = 'concreto'; // Prefab comparte mayoría con concreto y usa genérico para panel
+  const elementPrefix = ELEMENTO_MAPPING[grupo]?.[elementoId];
+  if (!elementPrefix) return null;
+  
+  let folderMatch = '03_Fisuras_grietas';
+  if (grupo === 'madera') folderMatch = '01_Danos_elementos_madera';
+  if (grupo === 'metal') folderMatch = '02_Danos_elementos_metalicos';
+
+  const matchKey = Object.keys(allImages).find(key => 
+    key.includes(folderMatch) && key.includes(elementPrefix) && key.includes(tipoMatch)
+  );
+  return matchKey ? allImages[matchKey] : null;
+};
+
+// NUEVOS DICCIONARIOS CON EMOJIS Y IDS PARA EL ENGINE
 const TAMANO_OPTIONS = [
-  { id: 'menos1mm', label: 'No entra nada (< 1mm)' },
-  { id: '1a2mm', label: 'Borde de una uña (1 a 2mm)' },
-  { id: '2a5mm', label: 'Mina de un lápiz (2 a 5mm)' },
-  { id: '5a20mm', label: 'Dedo meñique (0.5 a 2cm)' },
-  { id: 'mas30mm', label: 'Tres dedos juntos (> 3cm)' },
+  { id: 'w1', emoji: '🧵', label: 'No entra nada', desc: 'rayón con la uña (menos de 1 mm)' },
+  { id: 'w2', emoji: '💅', label: 'Borde de una uña', desc: 'o el filo de una hoja (1 a 2 mm)' },
+  { id: 'w3', emoji: '✏️', label: 'Mina de un lápiz', desc: 'o el canto de una moneda (2 a 5 mm)' },
+  { id: 'w4', emoji: '🤏', label: 'Dedo meñique completo', desc: 'de punta a punta (0,5 a 2 cm)' },
+  { id: 'w5', emoji: '🖐️', label: 'Caben tres dedos juntos', desc: 'índice, medio y anular (más de 3 cm)' },
 ];
 
 const EVOLUCION_OPTIONS = [
-  { id: 'crecido', label: 'Ha crecido recientemente' },
-  { id: 'igual', label: 'Sigue igual' },
-  { id: 'nosabe', label: 'No sabe' },
+  { id: 'no_sabe', emoji: '❓', label: 'No sabe', desc: 'no ha hecho seguimiento' },
+  { id: 'igual', emoji: '➖', label: 'Sigue igual', desc: 'se ve igual desde hace tiempo' },
+  { id: 'lento', emoji: '↗️', label: 'Aumentó lento', desc: 'poco a poco' },
+  { id: 'notorio', emoji: '⚠️', label: 'Aumentó notorio', desc: 'de forma notoria o reciente' },
 ];
 
 const ACEROS_OPTIONS = [
-  { id: 'si', label: 'Sí' },
-  { id: 'no', label: 'No' },
-  { id: 'nosabe', label: 'No sabe' },
+  { id: 'Sí', emoji: '⚠️', label: 'Sí' },
+  { id: 'No', emoji: '✅', label: 'No' },
+  { id: 'No sabe', emoji: '❓', label: 'No sabe' },
+];
+
+const CORROSION_OPTIONS = [
+  { id: 'Sí', emoji: '🟠', label: 'Sí' },
+  { id: 'No', emoji: '✅', label: 'No' },
+  { id: 'No sabe', emoji: '❓', label: 'No sabe' },
 ];
 
 const fisurasSchema = z.object({
@@ -52,7 +141,6 @@ const fisurasSchema = z.object({
 export default function FisurasForm({ onNext }) {
   const { formData, setFormData, setFooterHidden } = useFormStore();
   
-  // Estados Locales
   const [fisurasList, setFisurasList] = useState(
     Array.isArray(formData.step3?.fisurasList) ? formData.step3.fisurasList : []
   );
@@ -61,19 +149,30 @@ export default function FisurasForm({ onNext }) {
   const [currentSubStep, setCurrentSubStep] = useState(1);
   const [tempFisura, setTempFisura] = useState({});
 
-  // Form para el paso principal (solo para enviar al final)
+  const grupoEstructural = useMemo(() => {
+    return getSistemaGrupo(formData.step2?.tipoConstruccion || '');
+  }, [formData.step2?.tipoConstruccion]);
+
+  const tipoPisoTierra = formData.step2?.tipoPiso === 'tierra';
+
+  const elementoOptions = useMemo(() => {
+    return tipoPisoTierra ? ELEMENTO_OPTIONS_ALL.filter(e => e.id !== 'Piso') : ELEMENTO_OPTIONS_ALL;
+  }, [tipoPisoTierra]);
+
+  const tipoOptions = useMemo(() => {
+    return getTipoList(grupoEstructural);
+  }, [grupoEstructural]);
+
   const { handleSubmit } = useForm({
     resolver: zodResolver(fisurasSchema),
     defaultValues: { fisurasList }
   });
 
-  // Ocultar footer global cuando estamos en el subflujo
   useEffect(() => {
     setFooterHidden(isAdding);
     return () => setFooterHidden(false);
   }, [isAdding, setFooterHidden]);
 
-  // Sincronizar estado local con Zod si quisiéramos, pero Submit directo usa la lista.
   const onSubmit = () => {
     setFormData('step3', { fisurasList });
     if (onNext) onNext();
@@ -91,9 +190,18 @@ export default function FisurasForm({ onNext }) {
   };
 
   const handleDelete = (indexToDelete) => {
-    if (window.confirm("¿Seguro que deseas eliminar esta fisura?")) {
-      setFisurasList(prev => prev.filter((_, idx) => idx !== indexToDelete));
-    }
+    DangerConfirmModal.fire({
+      title: '¿Eliminar daño?',
+      text: "Esta acción no se puede deshacer.",
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonText: 'Sí, eliminar',
+      cancelButtonText: 'Cancelar'
+    }).then((result) => {
+      if (result.isConfirmed) {
+        setFisurasList(prev => prev.filter((_, idx) => idx !== indexToDelete));
+      }
+    });
   };
 
   const handleSaveFisura = () => {
@@ -108,21 +216,30 @@ export default function FisurasForm({ onNext }) {
     }
   };
 
+  const handleFileChange = (e) => {
+    if (e.target.files && e.target.files.length > 0) {
+      const file = e.target.files[0];
+      setTempFisura(prev => ({ 
+        ...prev, 
+        foto: file, 
+        fotoName: file.name,
+        fotoUrl: URL.createObjectURL(file)
+      }));
+    }
+  };
+
   const getLabel = (options, id) => options.find(o => o.id === id)?.label || id;
 
-  // --- VISTA 2: SUB-FLUJO ---
   if (isAdding) {
     return (
       <div className="w-full text-slate-700 animate-in fade-in slide-in-from-right-4 duration-300">
-        
-        {/* Breadcrumbs */}
         <div className="flex flex-wrap items-center gap-2 mb-8 bg-slate-50 p-3 rounded-xl border border-slate-100">
           {[
-            { step: 1, key: 'elemento', options: ELEMENTO_OPTIONS, name: 'Elemento' },
-            { step: 2, key: 'tipo', options: TIPO_OPTIONS, name: 'Tipo' },
+            { step: 1, key: 'elemento', options: elementoOptions, name: 'Elemento' },
+            { step: 2, key: 'tipo', options: tipoOptions, name: 'Tipo' },
             { step: 3, key: 'tamano', options: TAMANO_OPTIONS, name: 'Tamaño' },
             { step: 4, key: 'evolucion', options: EVOLUCION_OPTIONS, name: 'Evolución' },
-            { step: 5, key: 'acerosExpuestos', options: ACEROS_OPTIONS, name: 'Detalles' }
+            { step: 5, key: 'aceros', options: ACEROS_OPTIONS, name: 'Detalles' }
           ].map((b, i) => {
             const hasValue = !!tempFisura[b.key];
             const isActive = currentSubStep === b.step;
@@ -149,21 +266,22 @@ export default function FisurasForm({ onNext }) {
           })}
         </div>
 
-        {/* CONTENIDO DEL SUB-PASO */}
         <div className="mb-10 min-h-[300px]">
+          {/* PASO 1: ELEMENTO */}
           {currentSubStep === 1 && (
             <div className="animate-in fade-in slide-in-from-bottom-2 duration-300">
-              <h3 className="text-xl font-extrabold text-slate-900 mb-6">1. ¿En qué elemento está la fisura?</h3>
+              <h3 className="text-xl font-extrabold text-slate-900 mb-6">1. ¿En qué elemento está el daño?</h3>
               <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                {ELEMENTO_OPTIONS.map(opt => (
+                {elementoOptions.map(opt => (
                   <div 
                     key={opt.id}
                     onClick={() => selectOption('elemento', opt.id)}
-                    className="border-2 border-slate-100 rounded-xl p-4 flex flex-col items-center justify-center text-center cursor-pointer hover:border-[#1F3B5F] hover:bg-slate-50 transition-colors"
+                    className={`border-2 rounded-xl p-5 flex flex-col items-center justify-center text-center cursor-pointer transition-colors ${
+                      tempFisura.elemento === opt.id
+                        ? 'border-[#1F3B5F] bg-blue-50'
+                        : 'border-slate-100 hover:border-[#1F3B5F] hover:bg-slate-50'
+                    }`}
                   >
-                    <div className="w-16 h-16 bg-slate-200 rounded-lg mb-3 flex items-center justify-center text-slate-400 font-medium text-xs">
-                      [Imagen]
-                    </div>
                     <span className="font-bold text-sm text-slate-700">{opt.label}</span>
                   </div>
                 ))}
@@ -171,104 +289,175 @@ export default function FisurasForm({ onNext }) {
             </div>
           )}
 
+          {/* PASO 2: TIPO DE DAÑO */}
           {currentSubStep === 2 && (
             <div className="animate-in fade-in slide-in-from-bottom-2 duration-300">
-              <h3 className="text-xl font-extrabold text-slate-900 mb-6">2. Tipo de fisura</h3>
+              <h3 className="text-xl font-extrabold text-slate-900 mb-6">2. Tipo de daño</h3>
               <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                {TIPO_OPTIONS.map(opt => (
-                  <div 
-                    key={opt.id}
-                    onClick={() => selectOption('tipo', opt.id)}
-                    className="border-2 border-slate-100 rounded-xl p-4 flex flex-col items-center justify-center text-center cursor-pointer hover:border-[#1F3B5F] hover:bg-slate-50 transition-colors"
-                  >
-                    <div className="w-16 h-16 bg-slate-200 rounded-lg mb-3 flex items-center justify-center text-slate-400 font-medium text-xs">
-                      [Imagen]
+                {tipoOptions.map(opt => {
+                  const imgSrc = tempFisura.elemento ? getFisuraImage(grupoEstructural, tempFisura.elemento, opt.match) : null;
+                  return (
+                    <div 
+                      key={opt.id}
+                      onClick={() => selectOption('tipo', opt.id)}
+                      className={`border-2 rounded-xl p-4 flex flex-col items-center justify-center text-center cursor-pointer transition-colors ${
+                        tempFisura.tipo === opt.id
+                          ? 'border-[#1F3B5F] bg-blue-50'
+                          : 'border-slate-100 hover:border-[#1F3B5F] hover:bg-slate-50'
+                      }`}
+                    >
+                      <div className="w-full h-32 sm:h-48 bg-white p-2 rounded-lg mb-3 flex items-center justify-center text-slate-400 font-medium text-xs overflow-hidden">
+                        {imgSrc ? (
+                          <img src={imgSrc} alt={opt.label} className="w-full h-full object-contain" />
+                        ) : (
+                          <span>[Genérico]</span>
+                        )}
+                      </div>
+                      <span className="font-bold text-sm text-slate-700 leading-tight">{opt.label}</span>
                     </div>
-                    <span className="font-bold text-sm text-slate-700">{opt.label}</span>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
           )}
 
+          {/* PASO 3: TAMAÑO (TARJETAS CON EMOJIS) */}
           {currentSubStep === 3 && (
             <div className="animate-in fade-in slide-in-from-bottom-2 duration-300">
-              <h3 className="text-xl font-extrabold text-slate-900 mb-6">3. Tamaño aproximado</h3>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <h3 className="text-xl font-extrabold text-slate-900 mb-6">3. ¿Qué tan ancho es el daño?</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {TAMANO_OPTIONS.map(opt => (
                   <div 
                     key={opt.id}
                     onClick={() => selectOption('tamano', opt.id)}
-                    className="border-2 border-slate-100 rounded-xl p-4 flex flex-col items-center justify-center text-center cursor-pointer hover:border-[#1F3B5F] hover:bg-slate-50 transition-colors"
+                    className={`border-2 rounded-xl p-5 flex flex-col justify-center text-left cursor-pointer transition-colors ${
+                      tempFisura.tamano === opt.id
+                        ? 'border-[#1F3B5F] bg-blue-50'
+                        : 'border-slate-100 hover:border-[#1F3B5F] hover:bg-slate-50'
+                    }`}
                   >
-                    <div className="w-16 h-16 bg-slate-200 rounded-lg mb-3 flex items-center justify-center text-slate-400 font-medium text-xs">
-                      [Imagen]
+                    <div className="flex items-center gap-3 mb-1">
+                      <span className="text-2xl">{opt.emoji}</span>
+                      <span className="font-extrabold text-[15px] text-slate-800 leading-tight">{opt.label}</span>
                     </div>
-                    <span className="font-bold text-sm text-slate-700">{opt.label}</span>
+                    {opt.desc && <span className="text-xs text-slate-500 font-medium ml-9">{opt.desc}</span>}
                   </div>
                 ))}
               </div>
             </div>
           )}
 
+          {/* PASO 4: EVOLUCIÓN (TARJETAS CON EMOJIS) */}
           {currentSubStep === 4 && (
             <div className="animate-in fade-in slide-in-from-bottom-2 duration-300">
-              <h3 className="text-xl font-extrabold text-slate-900 mb-6">4. Evolución de la fisura</h3>
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <h3 className="text-xl font-extrabold text-slate-900 mb-6">4. Evolución del daño</h3>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {EVOLUCION_OPTIONS.map(opt => (
                   <div 
                     key={opt.id}
                     onClick={() => selectOption('evolucion', opt.id)}
-                    className="border-2 border-slate-100 rounded-xl p-4 flex flex-col items-center justify-center text-center cursor-pointer hover:border-[#1F3B5F] hover:bg-slate-50 transition-colors"
+                    className={`border-2 rounded-xl p-5 flex flex-col justify-center text-left cursor-pointer transition-colors ${
+                      tempFisura.evolucion === opt.id
+                        ? 'border-[#1F3B5F] bg-blue-50'
+                        : 'border-slate-100 hover:border-[#1F3B5F] hover:bg-slate-50'
+                    }`}
                   >
-                    <div className="w-16 h-16 bg-slate-200 rounded-lg mb-3 flex items-center justify-center text-slate-400 font-medium text-xs">
-                      [Imagen]
+                    <div className="flex items-center gap-3 mb-1">
+                      <span className="text-2xl">{opt.emoji}</span>
+                      <span className="font-extrabold text-[15px] text-slate-800 leading-tight">{opt.label}</span>
                     </div>
-                    <span className="font-bold text-sm text-slate-700">{opt.label}</span>
+                    {opt.desc && <span className="text-xs text-slate-500 font-medium ml-9">{opt.desc}</span>}
                   </div>
                 ))}
               </div>
             </div>
           )}
 
+          {/* PASO 5: DETALLES, FOTO Y CORROSIÓN */}
           {currentSubStep === 5 && (
             <div className="animate-in fade-in slide-in-from-bottom-2 duration-300">
               <h3 className="text-xl font-extrabold text-slate-900 mb-6">5. Detalles adicionales</h3>
               
               <div className="mb-8">
-                <label className="block text-xs font-bold text-slate-600 uppercase mb-2">FOTO DE LA FISURA (OPCIONAL)</label>
-                <div className="border-2 border-dashed border-slate-200 rounded-xl p-6 text-center hover:border-[#1F3B5F] hover:bg-blue-50/30 transition-colors cursor-pointer">
-                   <span className="text-slate-500 font-medium text-sm">Toque aquí para adjuntar una foto</span>
-                   <input type="file" accept="image/*" className="hidden" />
-                </div>
+                <label className="block text-xs font-bold text-slate-600 uppercase mb-2">FOTO DEL DAÑO (OPCIONAL)</label>
+                <label htmlFor="fotoFisura" className={`border-2 border-dashed border-slate-300 rounded-xl overflow-hidden text-center hover:border-[#1F3B5F] transition-colors cursor-pointer block ${tempFisura.fotoUrl ? 'bg-slate-100 p-0' : 'bg-slate-50 p-6 hover:bg-blue-50/30'}`}>
+                   {tempFisura.fotoUrl ? (
+                     <div className="relative group w-full h-48 flex items-center justify-center">
+                       <img src={tempFisura.fotoUrl} alt="Vista previa" className="w-full h-full object-cover" />
+                       <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                         <span className="text-white font-bold text-sm bg-[#1F3B5F] px-4 py-2 rounded-full shadow-lg">Cambiar foto</span>
+                       </div>
+                     </div>
+                   ) : (
+                     <div className="flex flex-col items-center gap-2">
+                       <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-8 h-8 text-slate-400">
+                         <path strokeLinecap="round" strokeLinejoin="round" d="M6.827 6.175A2.31 2.31 0 015.186 7.23c-.38.054-.757.112-1.134.175C2.999 7.58 2.25 8.507 2.25 9.574V18a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9.574c0-1.067-.75-1.994-1.802-2.169a47.865 47.865 0 00-1.134-.175 2.31 2.31 0 01-1.64-1.055l-.822-1.316a2.192 2.192 0 00-1.736-1.039 48.774 48.774 0 00-5.232 0 2.192 2.192 0 00-1.736 1.039l-.821 1.316z" />
+                         <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 12.75a4.5 4.5 0 11-9 0 4.5 4.5 0 019 0zM18.75 10.5h.008v.008h-.008V10.5z" />
+                       </svg>
+                       <span className="text-slate-600 font-medium text-sm">Toque aquí para adjuntar o tomar una foto</span>
+                     </div>
+                   )}
+                   <input type="file" id="fotoFisura" accept="image/*,capture=camera" className="hidden" onChange={handleFileChange} />
+                </label>
               </div>
 
-              <div>
-                <label className="block text-xs font-bold text-slate-600 uppercase mb-3">¿SE VEN ACEROS (VARILLAS) EXPUESTOS CERCA DE LA FISURA?</label>
+              {(grupoEstructural === 'concreto' || grupoEstructural === 'prefab') && (
+                <>
+                  <div>
+                <label className="block text-xs font-bold text-slate-600 uppercase mb-3">¿SE VEN ACEROS (VARILLAS) EXPUESTOS CERCA DEL DAÑO?</label>
                 <div className="grid grid-cols-3 gap-4">
                   {ACEROS_OPTIONS.map(opt => (
                     <div 
                       key={opt.id}
-                      onClick={() => setTempFisura(prev => ({ ...prev, acerosExpuestos: opt.id }))}
+                      onClick={() => {
+                        setTempFisura(prev => {
+                          const newFisura = { ...prev, aceros: opt.id };
+                          if (opt.id !== 'Sí') {
+                            newFisura.corrosion = null;
+                          }
+                          return newFisura;
+                        });
+                      }}
                       className={`border-2 rounded-xl p-4 flex flex-col items-center justify-center text-center cursor-pointer transition-colors ${
-                        tempFisura.acerosExpuestos === opt.id 
+                        tempFisura.aceros === opt.id 
                           ? 'border-[#1F3B5F] bg-blue-50' 
                           : 'border-slate-100 hover:border-[#1F3B5F] hover:bg-slate-50'
                       }`}
                     >
-                      <div className="w-16 h-16 bg-slate-200 rounded-lg mb-3 flex items-center justify-center text-slate-400 font-medium text-xs">
-                        [Imagen]
-                      </div>
+                      <span className="text-2xl mb-1">{opt.emoji}</span>
                       <span className="font-bold text-sm text-slate-700">{opt.label}</span>
                     </div>
                   ))}
                 </div>
               </div>
+
+              {tempFisura.aceros === 'Sí' && (
+                <div className="mt-6 animate-in fade-in slide-in-from-top-2 duration-300">
+                  <label className="block text-xs font-bold text-slate-600 uppercase mb-3">¿ESOS ACEROS TIENEN CORROSIÓN (ÓXIDO)?</label>
+                  <div className="grid grid-cols-3 gap-4">
+                    {CORROSION_OPTIONS.map(opt => (
+                      <div 
+                        key={opt.id}
+                        onClick={() => setTempFisura(prev => ({ ...prev, corrosion: opt.id }))}
+                        className={`border-2 rounded-xl p-4 flex flex-col items-center justify-center text-center cursor-pointer transition-colors ${
+                          tempFisura.corrosion === opt.id 
+                            ? 'border-orange-500 bg-orange-50' 
+                            : 'border-slate-100 hover:border-orange-400 hover:bg-orange-50/50'
+                        }`}
+                      >
+                        <span className="text-2xl mb-1">{opt.emoji}</span>
+                        <span className="font-bold text-sm text-slate-700">{opt.label}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+                  )}
+                </>
+              )}
             </div>
           )}
         </div>
 
-        {/* Footer del Sub-flujo */}
         <div className="flex justify-between items-center border-t border-slate-100 pt-6 mt-4">
           <div className="flex gap-3">
             <button 
@@ -287,13 +476,13 @@ export default function FisurasForm({ onNext }) {
             </button>
           </div>
           
-          {currentSubStep === 5 && tempFisura.acerosExpuestos && (
+          {currentSubStep === 5 && tempFisura.aceros && (tempFisura.aceros !== 'Sí' || tempFisura.corrosion) && (
             <button 
               type="button" 
               onClick={handleSaveFisura}
               className="px-6 py-2.5 rounded-xl font-bold text-sm text-white bg-[#1F3B5F] hover:bg-[#152a45] shadow-lg shadow-[#1F3B5F]/30 transition-all"
             >
-              GUARDAR FISURA
+              GUARDAR DAÑO
             </button>
           )}
         </div>
@@ -307,7 +496,7 @@ export default function FisurasForm({ onNext }) {
       <div className="mb-8">
         <h2 className="text-2xl md:text-3xl font-extrabold text-slate-900 tracking-tight">Fisuras, grietas, fallas</h2>
         <p className="text-slate-500 mt-2 text-base md:text-lg">
-          Registre cada fisura, grieta o falla que encuentre, una por una (hasta 12). Presione "Agregar fisura" y vaya completando los datos paso a paso.
+          Registre cada daño que encuentre, uno por uno (hasta 12). Presione "Agregar daño" y vaya completando los datos. Las opciones variarán según el material de su estructura.
         </p>
       </div>
 
@@ -319,8 +508,8 @@ export default function FisurasForm({ onNext }) {
                 <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v6m3-3H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
             </div>
-            <h3 className="font-bold text-slate-700 text-lg mb-1">Sin fisuras registradas</h3>
-            <p className="text-slate-500 text-sm max-w-sm">Si su edificación no presenta fisuras, puede continuar. De lo contrario, agregue cada fisura encontrada.</p>
+            <h3 className="font-bold text-slate-700 text-lg mb-1">Sin daños registrados</h3>
+            <p className="text-slate-500 text-sm max-w-sm">Si su edificación no presenta fisuras o daños graves, puede continuar. De lo contrario, agregue cada daño encontrado.</p>
           </div>
         ) : (
           <div className="flex flex-col gap-3">
@@ -331,17 +520,17 @@ export default function FisurasForm({ onNext }) {
                 </div>
                 <div className="flex-1 pt-0.5">
                   <h4 className="font-extrabold text-slate-800 text-sm sm:text-base mb-2">
-                    {ELEMENTO_OPTIONS.find(o => o.id === f.elemento)?.label}
+                    {elementoOptions.find(o => o.id === f.elemento)?.label || f.elemento}
                   </h4>
                   <div className="flex flex-wrap gap-1.5 sm:gap-2">
                     <span className="inline-flex items-center px-2 py-1 bg-slate-50 border border-slate-200 text-slate-600 text-[10px] sm:text-xs font-semibold rounded-md">
-                      {TIPO_OPTIONS.find(o => o.id === f.tipo)?.label}
+                      {getLabel(tipoOptions, f.tipo)}
                     </span>
                     <span className="inline-flex items-center px-2 py-1 bg-slate-50 border border-slate-200 text-slate-600 text-[10px] sm:text-xs font-semibold rounded-md">
-                      {TAMANO_OPTIONS.find(o => o.id === f.tamano)?.label}
+                      {getLabel(TAMANO_OPTIONS, f.tamano)}
                     </span>
                     <span className="inline-flex items-center px-2 py-1 bg-slate-50 border border-slate-200 text-slate-600 text-[10px] sm:text-xs font-semibold rounded-md">
-                      {EVOLUCION_OPTIONS.find(o => o.id === f.evolucion)?.label}
+                      {getLabel(EVOLUCION_OPTIONS, f.evolucion)}
                     </span>
                   </div>
                 </div>
@@ -370,7 +559,7 @@ export default function FisurasForm({ onNext }) {
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-5 h-5">
               <path d="M10.75 4.75a.75.75 0 00-1.5 0v4.5h-4.5a.75.75 0 000 1.5h4.5v4.5a.75.75 0 001.5 0v-4.5h4.5a.75.75 0 000-1.5h-4.5v-4.5z" />
             </svg>
-            AGREGAR FISURA
+            AGREGAR DAÑO
           </button>
         </div>
       )}

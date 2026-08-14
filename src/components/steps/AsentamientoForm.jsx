@@ -4,27 +4,36 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import useFormStore from '../../store/useFormStore';
 
+import imgUniforme from '../../assets/fotos/05_Terreno_cimentacion_asentamientos/Asentamientos_deformaciones/5_Asentamiento_uniforme_parejo.png';
+import imgDiferencial from '../../assets/fotos/05_Terreno_cimentacion_asentamientos/Asentamientos_deformaciones/6_Asentamiento_diferencial.png';
+import imgInclinacion from '../../assets/fotos/05_Terreno_cimentacion_asentamientos/Asentamientos_deformaciones/7_Inclinacion_general_construccion.png';
+import imgLocalizado from '../../assets/fotos/05_Terreno_cimentacion_asentamientos/Asentamientos_deformaciones/8_Hundimiento_localizado.png';
+
 // --- DICCIONARIO DE DATOS ---
 const ASENTAMIENTO_CARDS = [
   {
     id: 'uniforme',
     titulo: 'Asentamiento uniforme [pasan]',
     descripcion: 'Toda la construcción baja al mismo ritmo, sin doblarse hasta ningún lado, sin desniveles.',
+    imageSrc: imgUniforme
   },
   {
     id: 'diferencial',
     titulo: 'Asentamiento diferencial [un lado baja más que el otro]',
     descripcion: 'Una parte de la construcción baja más que el resto.',
+    imageSrc: imgDiferencial
   },
   {
     id: 'inclinacion',
     titulo: 'Inclinación general de toda la construcción [Inclinación muy distinta]',
     descripcion: 'Toda la construcción se inclina hacia un lado como una torre inclinada.',
+    imageSrc: imgInclinacion
   },
   {
     id: 'localizado',
     titulo: 'Hundimiento localizado [una sola esquina, esquina o columna dentro de la construcción]',
     descripcion: 'Hundimiento localizado en su misma área abierta.',
+    imageSrc: imgLocalizado
   }
 ];
 
@@ -102,15 +111,19 @@ export default function AsentamientoForm({ onNext }) {
         <h3 className="text-lg font-bold text-slate-800 mb-4 uppercase tracking-wide">¿Qué observa?</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {ASENTAMIENTO_CARDS.map((card) => (
-            <div key={card.id} className={`border-2 rounded-2xl overflow-hidden transition-all duration-300 ${errors[card.id] ? 'border-red-300 bg-red-50/30' : 'border-slate-100 bg-white hover:border-slate-300 shadow-sm'}`}>
+            <div key={card.id} className={`flex flex-col h-full border-2 rounded-2xl overflow-hidden transition-all duration-300 ${errors[card.id] ? 'border-red-300 bg-red-50/30' : 'border-slate-100 bg-white hover:border-slate-300 shadow-sm'}`}>
               
-              {/* Imagen Placeholder */}
-              <div className="w-full h-36 bg-slate-100 flex flex-col items-center justify-center text-slate-400 font-medium text-sm">
-                [Imagen]
+              {/* Imagen */}
+              <div className="w-full h-56 bg-white p-2 flex flex-col items-center justify-center overflow-hidden">
+                {card.imageSrc ? (
+                  <img src={card.imageSrc} alt={card.titulo} className="w-full h-full object-contain transition-transform duration-500 hover:scale-110" />
+                ) : (
+                  <span className="text-slate-400 font-medium text-sm">[Imagen]</span>
+                )}
               </div>
               
               {/* Contenido de la Tarjeta */}
-              <div className="p-5 flex flex-col h-[calc(100%-9rem)]">
+              <div className="p-5 flex flex-col flex-1">
                 <h4 className="font-extrabold text-slate-800 text-[15px] mb-2 leading-snug">{card.titulo}</h4>
                 <p className="text-xs text-slate-500 mb-5 flex-1">{card.descripcion}</p>
                 

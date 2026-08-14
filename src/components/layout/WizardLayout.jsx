@@ -3,15 +3,26 @@ import { RotateCcw } from 'lucide-react';
 import StepperHeader from '../ui/StepperHeader';
 import CustomButton from '../ui/CustomButton';
 import useFormStore from '../../store/useFormStore';
+import { DangerConfirmModal } from '../../utils/alerts';
+import FormHeader from './FormHeader';
 
 const WizardLayout = ({ children }) => {
   const { currentStep, prevStep, resetDiagnostico, isFooterHidden } = useFormStore();
   const totalSteps = 6;
 
   const handleReset = () => {
-    if (window.confirm("¿Estás seguro de que deseas limpiar todo el formulario y volver al inicio? Perderás los datos ingresados.")) {
-      resetDiagnostico();
-    }
+    DangerConfirmModal.fire({
+      title: '¿Reiniciar diagnóstico?',
+      text: "Perderás todos los datos ingresados. Esta acción no se puede deshacer.",
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonText: 'Sí, reiniciar',
+      cancelButtonText: 'Cancelar'
+    }).then((result) => {
+      if (result.isConfirmed) {
+        resetDiagnostico();
+      }
+    });
   };
 
   return (
@@ -26,8 +37,11 @@ const WizardLayout = ({ children }) => {
           
           {/* Main Form Area */}
           <div className="flex-1 overflow-y-auto px-5 py-6 md:px-10 md:py-8 pb-32 md:pb-10">
-            <div className="max-w-3xl mx-auto w-full animate-in fade-in slide-in-from-bottom-4 duration-500 ease-out">
-              {children}
+            <div className="max-w-3xl mx-auto w-full">
+              {currentStep !== 7 && <FormHeader />}
+              <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 ease-out">
+                {children}
+              </div>
             </div>
           </div>
 
@@ -47,27 +61,18 @@ const WizardLayout = ({ children }) => {
                   </CustomButton>
                 )}
                 
-                <div className="flex-1 flex gap-2">
+                <div className="flex-1 flex">
                   <CustomButton 
                     type="submit" 
                     form="step-form" 
                     variant="primary"
-                    className="flex-[9] md:w-auto md:px-12"
+                    className="w-full md:w-auto md:px-12"
                   >
                     {currentStep === totalSteps ? 'Finalizar diagnóstico' : 'Continuar'}
                     <svg className="w-5 h-5 ml-1 hidden md:block" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 8l4 4m0 0l-4 4m4-4H3"></path>
                     </svg>
                   </CustomButton>
-                  
-                  <button 
-                    type="button"
-                    onClick={handleReset}
-                    className="flex-[1] flex items-center justify-center bg-slate-100 hover:bg-red-50 text-slate-500 hover:text-red-500 rounded-xl transition-colors border border-transparent hover:border-red-200"
-                    title="Limpiar y reiniciar todo"
-                  >
-                    <RotateCcw className="w-5 h-5" />
-                  </button>
                 </div>
               </div>
             </div>

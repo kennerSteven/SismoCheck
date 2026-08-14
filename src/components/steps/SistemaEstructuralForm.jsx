@@ -6,6 +6,18 @@ import useFormStore from '../../store/useFormStore';
 
 import { CONSTRUCCION_OPTIONS, CUBIERTA_OPTIONS } from '../../constants/sistemaEstructuralData';
 
+import imgPisoCemento from '../../assets/fotos/04_Pisos_y_cubiertas/Tipo_de_piso/1_Piso_duro_cemento.png';
+import imgPisoTierra from '../../assets/fotos/04_Pisos_y_cubiertas/Tipo_de_piso/2_Piso_en_tierra.png';
+import imgPisoMadera from '../../assets/fotos/04_Pisos_y_cubiertas/Tipo_de_piso/3_Piso_en_madera.png';
+import imgPisoOtro from '../../assets/fotos/04_Pisos_y_cubiertas/Tipo_de_piso/4_Otro_no_se.png';
+
+const PISO_OPTIONS = [
+  { id: 'cemento', titulo: 'Piso duro en cemento', descripcion: 'Cualquier tipo de acabado duro sobre cemento.', imageSrc: imgPisoCemento },
+  { id: 'tierra', titulo: 'Piso en tierra', descripcion: 'Suelo natural, sin cubierta rígida.', imageSrc: imgPisoTierra },
+  { id: 'madera', titulo: 'Piso en madera', descripcion: 'Tablones o estibas de madera.', imageSrc: imgPisoMadera },
+  { id: 'otro', titulo: 'Otro / No sé', descripcion: 'No es claro el tipo de piso.', imageSrc: imgPisoOtro }
+];
+
 const sistemaEstructuralSchema = z.object({
   tipoConstruccion: z.string().min(1, "Seleccione un tipo de construcción"),
   descripcionConstruccion: z.string().optional().or(z.literal('')),
@@ -22,9 +34,9 @@ const SelectableImageCard = ({ title, description, imageSrc, isSelected, onClick
           : 'border-2 border-slate-100 hover:border-slate-300 hover:shadow-sm'
       }`}
     >
-      <div className="h-44 w-full bg-slate-100 flex items-center justify-center overflow-hidden relative">
+      <div className="h-56 w-full bg-white p-2 flex items-center justify-center overflow-hidden relative">
         {imageSrc ? (
-          <img src={imageSrc} alt={title} className={`w-full h-full object-cover transition-transform duration-500 ${isSelected ? 'scale-105' : 'group-hover:scale-110'}`} />
+          <img src={imageSrc} alt={title} className={`w-full h-full object-contain transition-transform duration-500 ${isSelected ? 'scale-105' : 'group-hover:scale-110'}`} />
         ) : (
           <div className="flex flex-col items-center justify-center text-slate-400 font-medium text-sm">
             [Imagen]
@@ -161,37 +173,27 @@ export default function SistemaEstructuralForm({ onNext, onPrev }) {
           <p className="text-slate-500 mt-2 text-base md:text-lg">¿El piso de la construcción es duro en cemento (sin importar el acabado), en tierra, o en madera?</p>
         </div>
         
-        <div className="max-w-xl">
-          <label className="block text-xs font-bold text-slate-600 uppercase mb-1">TIPO DE PISO</label>
-          <div className="w-full relative">
-            <select
-              className={`w-full px-4 py-3.5 rounded-xl border-2 bg-slate-50 text-slate-800 text-sm md:text-base focus:outline-none transition-all duration-200 appearance-none ${
-                errors.tipoPiso 
-                  ? 'border-red-500 focus:border-red-600 bg-red-50' 
-                  : 'border-slate-200 hover:border-slate-300 focus:border-blue-500 focus:bg-white'
-              }`}
-              style={{
-                backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%23334155' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e")`,
-                backgroundPosition: 'right 1rem center',
-                backgroundRepeat: 'no-repeat',
-                backgroundSize: '1.5em 1.5em',
-                paddingRight: '2.5rem'
-              }}
-              {...register('tipoPiso')}
-            >
-              <option value="">Seleccione...</option>
-              <option value="cemento">Piso duro en cemento (cualquier acabado)</option>
-              <option value="tierra">Piso en tierra</option>
-              <option value="madera">Piso en madera</option>
-            </select>
-            {errors.tipoPiso && (
-              <div className="flex items-center gap-1.5 mt-2 bg-red-100 text-red-700 px-3 py-1.5 rounded-lg w-fit animate-in slide-in-from-top-1 fade-in duration-300">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4 shrink-0"><path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-5a.75.75 0 01.75.75v4.5a.75.75 0 01-1.5 0v-4.5A.75.75 0 0110 5zm0 10a1 1 0 100-2 1 1 0 000 2z" clipRule="evenodd" /></svg>
-                <span className="text-sm font-bold tracking-tight">{errors.tipoPiso.message}</span>
-              </div>
-            )}
-          </div>
-        </div>
+        <Controller
+          name="tipoPiso"
+          control={control}
+          render={({ field }) => (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+              {PISO_OPTIONS.map((item) => (
+                <SelectableImageCard
+                  key={item.id}
+                  title={item.titulo}
+                  description={item.descripcion}
+                  imageSrc={item.imageSrc}
+                  isSelected={field.value === item.id}
+                  onClick={() => field.onChange(item.id)}
+                />
+              ))}
+            </div>
+          )}
+        />
+        {errors.tipoPiso && (
+          <span className="text-red-600 text-xs mt-3 block font-medium">{errors.tipoPiso.message}</span>
+        )}
       </div>
 
     </form>

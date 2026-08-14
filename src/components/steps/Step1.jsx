@@ -3,6 +3,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import useFormStore from '../../store/useFormStore';
+import { Toast } from '../../utils/alerts';
 
 const zNum = (msg, minVal, minMsg) => 
   z.any()
@@ -23,7 +24,6 @@ export const step1Schema = z.object({
   numeroSotanos: zNum('Debe ingresar un número', 0, 'No puede ser negativo'),
   ancho: zNum('Debe ingresar el ancho', 0.1, 'Debe ser mayor a 0'),
   largo: zNum('Debe ingresar el largo', 0.1, 'Debe ser mayor a 0'),
-  alto: zNum('Debe ingresar el alto', 0.1, 'Debe ser mayor a 0'),
   anoConstruccion: zNum('Debe ingresar un año', 1800, 'Ingrese un año válido'),
   usoActual: z.string({ required_error: 'Seleccione un uso de la lista', invalid_type_error: 'Seleccione un uso de la lista' }).min(1, 'Seleccione un uso de la lista'),
   latitud: zNum('Haga clic en el botón de ubicación'),
@@ -119,6 +119,8 @@ export default function Step1({ onNext }) {
   });
 
   const fotoFachadaFiles = watch('fotoFachada');
+  const anchoVal = watch('ancho');
+  const largoVal = watch('largo');
 
   React.useEffect(() => {
     if (fotoFachadaFiles && fotoFachadaFiles.length > 0) {
@@ -130,8 +132,20 @@ export default function Step1({ onNext }) {
     }
   }, [fotoFachadaFiles]);
 
-  const onSubmit = (data) => {
-    setFormData('step1', data);
+  const onSubmit = async (data) => {
+    let fotoBase64 = null;
+    if (fotoFachadaFiles && fotoFachadaFiles.length > 0) {
+      fotoBase64 = await new Promise((resolve) => {
+        const reader = new FileReader();
+        reader.onloadend = () => resolve(reader.result);
+        reader.readAsDataURL(fotoFachadaFiles[0]);
+      });
+    }
+    
+    setFormData('step1', {
+      ...data,
+      fotoFachadaUrl: fotoBase64 || formData.step1?.fotoFachadaUrl
+    });
     onNext();
   };
 
@@ -149,14 +163,14 @@ export default function Step1({ onNext }) {
           setIsLocating(false);
         },
         (error) => {
-          alert('Error obteniendo ubicación: ' + error.message);
           setIsLocating(false);
+          Toast.fire({ icon: 'error', title: 'Error obteniendo ubicación: ' + error.message });
         },
         { enableHighAccuracy: true }
       );
     } else {
-      alert('Geolocalización no soportada');
       setIsLocating(false);
+      Toast.fire({ icon: 'error', title: 'Geolocalización no soportada' });
     }
   };
 
@@ -283,30 +297,36 @@ export default function Step1({ onNext }) {
       {/* Dimensiones */}
       <div className="mb-5">
         <label className="block text-xs font-bold text-slate-600 uppercase mb-1.5">DIMENSIONES APROXIMADAS DEL PREDIO O EDIFICACIÓN</label>
-        <div className="flex flex-col md:flex-row items-center gap-2">
-          <InputField 
-            type="number" step="0.01"
-            placeholder="Ancho (m)"
-            {...register('ancho', { valueAsNumber: true })} 
-            error={errors.ancho} 
-          />
-          <span className="text-slate-400 text-xs hidden md:block">x</span>
-          <InputField 
-            type="number" step="0.01"
-            placeholder="Largo (m)"
-            {...register('largo', { valueAsNumber: true })} 
-            error={errors.largo} 
-          />
-          <span className="text-slate-400 text-xs hidden md:block">x</span>
-          <InputField 
-            type="number" step="0.01"
-            placeholder="Alto (m)"
-            {...register('alto', { valueAsNumber: true })} 
-            error={errors.alto} 
-          />
+        <div className="flex flex-col gap-4">
+          <div>
+            <InputField 
+              type="number" step="0.01"
+              placeholder="Ancho (m o pasos)"
+              {...register('ancho', { valueAsNumber: true })} 
+              error={errors.ancho} 
+            />
+            {!Number.isNaN(anchoVal) && anchoVal > 0 && (
+              <span className="block text-[11px] text-blue-600 mt-1.5 font-medium ml-2">
+                Si son pasos: aprox. {(anchoVal * 0.75).toFixed(2)} m
+              </span>
+            )}
+          </div>
+          <div>
+            <InputField 
+              type="number" step="0.01"
+              placeholder="Largo (m o pasos)"
+              {...register('largo', { valueAsNumber: true })} 
+              error={errors.largo} 
+            />
+            {!Number.isNaN(largoVal) && largoVal > 0 && (
+              <span className="block text-[11px] text-blue-600 mt-1.5 font-medium ml-2">
+                Si son pasos: aprox. {(largoVal * 0.75).toFixed(2)} m
+              </span>
+            )}
+          </div>
         </div>
-        <span className="block text-[11px] text-slate-500 mt-1.5">
-          Ancho, largo y alto total desde el nivel del piso hasta la cubierta. Puede medir a pasos si no tiene cinta métrica (1 paso = 0,75 m).
+        <span className="block text-[11px] text-slate-500 mt-3">
+          Ancho y largo total de la construcción. Puede medir a pasos si no tiene cinta métrica (1 paso = 0,75 m).
         </span>
       </div>
 
@@ -334,19 +354,40 @@ export default function Step1({ onNext }) {
       {/* Ubicación */}
       <div className="mb-5">
         <label className="block text-xs font-bold text-slate-600 uppercase mb-1">UBICACIÓN (GEORREFERENCIACIÓN)</label>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-          <InputField 
-            type="number" step="any"
-            placeholder="Latitud, ej. 4.702000"
-            {...register('latitud', { valueAsNumber: true })} 
-            error={errors.latitud} 
-          />
-          <InputField 
-            type="number" step="any"
-            placeholder="Longitud, ej. -74.042000"
-            {...register('longitud', { valueAsNumber: true })} 
-            error={errors.longitud} 
-          />
+        <div className="flex flex-col gap-4">
+          <div className="flex gap-4">
+            <div className="flex-1">
+              <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">LATITUD</label>
+              <InputField 
+                type="number" step="any"
+                placeholder="Ej. 4.6097"
+                {...register('latitud', { valueAsNumber: true })} 
+                error={errors.latitud} 
+              />
+            </div>
+            <div className="flex-1">
+              <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">LONGITUD</label>
+              <InputField 
+                type="number" step="any"
+                placeholder="Ej. -74.0817"
+                {...register('longitud', { valueAsNumber: true })} 
+                error={errors.longitud} 
+              />
+            </div>
+          </div>
+
+          {typeof watch('latitud') === 'number' && typeof watch('longitud') === 'number' && watch('latitud') >= -90 && watch('latitud') <= 90 && (
+            <div className="w-full h-48 md:h-64 rounded-xl overflow-hidden border-2 border-slate-200 shadow-inner relative group">
+              <div className="absolute inset-0 z-10 bg-transparent"></div>
+              <iframe 
+                width="100%" 
+                height="100%" 
+                style={{ border: 0 }}
+                src={`https://www.openstreetmap.org/export/embed.html?bbox=${watch('longitud')-0.005},${watch('latitud')-0.005},${watch('longitud')+0.005},${watch('latitud')+0.005}&layer=mapnik&marker=${watch('latitud')},${watch('longitud')}`}
+                allowFullScreen
+              ></iframe>
+            </div>
+          )}
           <button 
             type="button" 
             onClick={handleGetLocation}

@@ -10,6 +10,7 @@ const GRUPOS = [
     id: 'fachadas',
     titulo: '1. Fachadas',
     opciones: [
+      'Sin daños aparentes',
       'Fisuras o grietas',
       'Baldosas sueltas',
       'Manchas o escurrimientos de humedad'
@@ -19,6 +20,7 @@ const GRUPOS = [
     id: 'puertas_ventanas',
     titulo: '2. Puertas y ventanas',
     opciones: [
+      'Sin daños aparentes',
       'Puerta rota, caída o suelta',
       'Vidrios rotos',
       'Marcos sueltos'
@@ -28,6 +30,7 @@ const GRUPOS = [
     id: 'pisos_cielorasos',
     titulo: '3. Pisos y cielo rasos',
     opciones: [
+      'Sin daños aparentes',
       'Piezas de piso sueltas o rotas',
       'Cielo rasos desprendidos o descolgados'
     ]
@@ -36,6 +39,7 @@ const GRUPOS = [
     id: 'muros_interiores',
     titulo: '4. Muros interiores',
     opciones: [
+      'Sin daños aparentes',
       'Piezas de enchape sueltas o rotas',
       'Pintura abombada'
     ]
@@ -44,6 +48,7 @@ const GRUPOS = [
     id: 'instalaciones',
     titulo: '5. Instalaciones',
     opciones: [
+      'Sin daños aparentes',
       'Tubería rota, pérdida de agua',
       'Presión baja',
       'Drenaje lento',
@@ -55,6 +60,7 @@ const GRUPOS = [
     id: 'cubiertas',
     titulo: '6. Cubiertas o techo',
     opciones: [
+      'Sin daños aparentes',
       'Goteras o humedad',
       'Desprendimiento o rotura de algunas piezas',
       'Colapso (desprendimiento total)',
@@ -64,12 +70,12 @@ const GRUPOS = [
 ];
 
 const elementosSchema = z.object({
-  fachadas: z.array(z.string()),
-  puertas_ventanas: z.array(z.string()),
-  pisos_cielorasos: z.array(z.string()),
-  muros_interiores: z.array(z.string()),
-  instalaciones: z.array(z.string()),
-  cubiertas: z.array(z.string()),
+  fachadas: z.array(z.string()).min(1, "Debe seleccionar al menos una opción"),
+  puertas_ventanas: z.array(z.string()).min(1, "Debe seleccionar al menos una opción"),
+  pisos_cielorasos: z.array(z.string()).min(1, "Debe seleccionar al menos una opción"),
+  muros_interiores: z.array(z.string()).min(1, "Debe seleccionar al menos una opción"),
+  instalaciones: z.array(z.string()).min(1, "Debe seleccionar al menos una opción"),
+  cubiertas: z.array(z.string()).min(1, "Debe seleccionar al menos una opción"),
   sabeTotalMuros: z.string().min(1, "Seleccione una opción"),
   totalMuros: z.string().optional().or(z.literal('')),
   murosConDanos: z.string().min(1, "Este campo es obligatorio"),
@@ -112,10 +118,20 @@ const MultiSelectDropdown = ({ title, options, selected, onChange }) => {
   }, []);
 
   const handleToggle = (opt) => {
+    if (opt === 'Sin daños aparentes') {
+      if (selected.includes(opt)) {
+        onChange(selected.filter(i => i !== opt));
+      } else {
+        onChange([opt]); // Si selecciona Sin daños, deselecciona los demás
+      }
+      return;
+    }
+
+    // Si selecciona un daño, quita "Sin daños aparentes"
     if (selected.includes(opt)) {
       onChange(selected.filter(i => i !== opt));
     } else {
-      onChange([...selected, opt]);
+      onChange([...selected.filter(i => i !== 'Sin daños aparentes'), opt]);
     }
   };
 
@@ -235,19 +251,23 @@ export default function ElementosNoEstructuralesForm({ onNext }) {
             <div className="flex-1 pr-4">
               <h3 className="font-bold text-slate-800 text-lg">{grupo.titulo}</h3>
             </div>
-            
-            <Controller
-              name={grupo.id}
-              control={control}
-              render={({ field }) => (
-                <MultiSelectDropdown
-                  title={grupo.titulo}
-                  options={grupo.opciones}
-                  selected={field.value}
-                  onChange={field.onChange}
-                />
+            <div className="flex flex-col items-end">
+              <Controller
+                name={grupo.id}
+                control={control}
+                render={({ field }) => (
+                  <MultiSelectDropdown
+                    title={grupo.titulo}
+                    options={grupo.opciones}
+                    selected={field.value}
+                    onChange={field.onChange}
+                  />
+                )}
+              />
+              {errors[grupo.id] && (
+                <span className="text-red-500 text-xs mt-2 font-bold animate-in fade-in">{errors[grupo.id].message}</span>
               )}
-            />
+            </div>
           </div>
         ))}
       </div>

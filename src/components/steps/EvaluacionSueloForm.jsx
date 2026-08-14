@@ -4,27 +4,36 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import useFormStore from '../../store/useFormStore';
 
+import imgDeslizamiento from '../../assets/fotos/05_Terreno_cimentacion_asentamientos/Condiciones_terreno_cimentacion/1_Deslizamiento_tierras.png';
+import imgCaidaRocas from '../../assets/fotos/05_Terreno_cimentacion_asentamientos/Condiciones_terreno_cimentacion/2_Caida_rocas.png';
+import imgLicuefaccion from '../../assets/fotos/05_Terreno_cimentacion_asentamientos/Condiciones_terreno_cimentacion/3_Licuefaccion.png';
+import imgCimentacionExpuesta from '../../assets/fotos/05_Terreno_cimentacion_asentamientos/Condiciones_terreno_cimentacion/4_Cimentacion_expuesta.png';
+
 // --- DICCIONARIO DE DATOS ---
 const EVALUACION_CARDS = [
   {
     id: 'deslizamiento',
     titulo: 'Deslizamiento de tierras',
     descripcion: 'Mire el lote y los alrededores, si hay una loma, ladera o corte de tierra cerca. ¿Ve grietas largas en el suelo, como si la tierra se hubiera partido en pedazos; una parte del terreno que se ve hundida o corrida hacia abajo; árboles, postes o cercas inclinados sin razón; o tierra y lodo acumulados en la parte baja del lote?',
+    imageSrc: imgDeslizamiento
   },
   {
     id: 'caida_rocas',
     titulo: 'Caída de rocas',
     descripcion: 'Revise. ¿Ve piedras o rocas sueltas en la parte alta que se puedan caer, rocas que ya cayeron y quedaron cerca de la construcción, o golpes y marcas recientes de piedras en paredes, techos o el piso?',
+    imageSrc: imgCaidaRocas
   },
   {
     id: 'licuefaccion',
     titulo: 'Licuefacción',
     descripcion: '¿El suelo parece arena movediza, gelatina o lodo blando, en vez de solar firme? ¿Ha visto que salga arena o agua del suelo sin explicación?',
+    imageSrc: imgLicuefaccion
   },
   {
     id: 'cimentacion_expuesta',
     titulo: 'Cimentación expuesta',
     descripcion: 'Mire la base de la construcción. ¿Se alcanza a ver la estructura, como si la tierra de alrededor se hubiera lavado, erosionado o caído?',
+    imageSrc: imgCimentacionExpuesta
   }
 ];
 
@@ -79,15 +88,19 @@ export default function EvaluacionSueloForm({ onNext }) {
       <div className="mb-10">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {EVALUACION_CARDS.map((card) => (
-            <div key={card.id} className={`border-2 rounded-2xl overflow-hidden transition-all duration-300 ${errors[card.id] ? 'border-red-300 bg-red-50/30' : 'border-slate-100 bg-white hover:border-slate-300 shadow-sm'}`}>
+            <div key={card.id} className={`flex flex-col h-full border-2 rounded-2xl overflow-hidden transition-all duration-300 ${errors[card.id] ? 'border-red-300 bg-red-50/30' : 'border-slate-100 bg-white hover:border-slate-300 shadow-sm'}`}>
               
-              {/* Imagen Placeholder */}
-              <div className="w-full h-36 bg-slate-100 flex flex-col items-center justify-center text-slate-400 font-medium text-sm">
-                [Imagen]
+              {/* Imagen */}
+              <div className="w-full h-56 bg-white p-2 flex flex-col items-center justify-center overflow-hidden">
+                {card.imageSrc ? (
+                  <img src={card.imageSrc} alt={card.titulo} className="w-full h-full object-contain transition-transform duration-500 hover:scale-110" />
+                ) : (
+                  <span className="text-slate-400 font-medium text-sm">[Imagen]</span>
+                )}
               </div>
               
               {/* Contenido de la Tarjeta */}
-              <div className="p-5 flex flex-col h-[calc(100%-9rem)]">
+              <div className="p-5 flex flex-col flex-1">
                 <h4 className="font-extrabold text-slate-800 text-[15px] mb-2 leading-snug">{card.titulo}</h4>
                 <p className="text-xs text-slate-500 mb-5 flex-1">{card.descripcion}</p>
                 
