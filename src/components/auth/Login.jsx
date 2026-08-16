@@ -78,7 +78,6 @@ export default function Login() {
         }
       }
     } catch (err) {
-      console.error('Error con Firebase:', err);
       setError('Ocurrió un error al conectarse con el servidor.');
     } finally {
       setIsLoading(false);
@@ -192,6 +191,10 @@ export default function Login() {
               </svg>
             )}
           </CustomButton>
+
+
+
+
         </form>
       </div>
 

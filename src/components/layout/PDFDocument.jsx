@@ -4,6 +4,70 @@ import logoUrl from '../../assets/contro.ico';
 import qatroLogoUrl from '../../assets/Qatro.png';
 import nmLogoUrl from '../../assets/NM.png';
 
+const StaticTileMap = ({ lat, lon, zoom }) => {
+  // Slippy Map math
+  const n = Math.pow(2, zoom);
+  const latRad = (lat * Math.PI) / 180;
+  const xtileExact = n * ((lon + 180) / 360);
+  const ytileExact = (n * (1 - Math.log(Math.tan(latRad) + 1 / Math.cos(latRad)) / Math.PI)) / 2;
+
+  const xtile = Math.floor(xtileExact);
+  const ytile = Math.floor(ytileExact);
+
+  // Pixel offset from the top-left of the center tile (256x256)
+  const px = (xtileExact - xtile) * 256;
+  const py = (ytileExact - ytile) * 256;
+
+  // We want the exact coordinate to be at the center of the container.
+  // The container is 100% width/height. We'll make the grid 3x3 tiles (768x768px).
+  // The exact coordinate inside the 768x768 grid is at (256 + px, 256 + py).
+  // We offset the grid by - (256 + px) and - (256 + py) plus 50% of the container to center it.
+  
+  const tiles = [];
+  for (let dy = -1; dy <= 1; dy++) {
+    for (let dx = -1; dx <= 1; dx++) {
+      tiles.push({ x: xtile + dx, y: ytile + dy, key: `${xtile + dx}-${ytile + dy}` });
+    }
+  }
+
+  return (
+    <div className="absolute inset-0 z-10 bg-[#AAD3DF] pointer-events-none" style={{ overflow: 'hidden' }}>
+      <div 
+        className="absolute" 
+        style={{ 
+          width: '768px', height: '768px', 
+          top: '50%', left: '50%', 
+          transform: `translate(calc(-50% - ${px}px + 128px), calc(-50% - ${py}px + 128px))` 
+        }}
+      >
+        {tiles.map((t, index) => {
+          const col = index % 3;
+          const row = Math.floor(index / 3);
+          return (
+            <img 
+              key={t.key}
+              src={`https://tile.openstreetmap.org/${zoom}/${t.x}/${t.y}.png`}
+              crossOrigin="anonymous"
+              alt="Map Tile"
+              style={{
+                position: 'absolute',
+                left: `${col * 256}px`,
+                top: `${row * 256}px`,
+                width: '256px',
+                height: '256px'
+              }}
+            />
+          );
+        })}
+      </div>
+      {/* Red Pin exactly in the center of the container */}
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-full z-20 pb-2">
+        <span className="text-4xl drop-shadow-md">📍</span>
+      </div>
+    </div>
+  );
+};
+
 const Cell = ({ label, value, colSpan = 1, className = '', valueClass = '' }) => (
   <div className={`p-3 border-r border-b border-slate-100 flex flex-col justify-start col-span-${colSpan} ${className}`} style={{ gridColumn: `span ${colSpan} / span ${colSpan}` }}>
     <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">{label}</span>
@@ -237,17 +301,13 @@ export const PDFDocument = React.forwardRef(({
               )}
             </div>
             <div className="border-2 border-slate-200 rounded-xl flex flex-col items-center justify-center relative p-2 h-96 bg-slate-100 overflow-hidden">
-              <div className="absolute top-4 left-4 bg-white/90 backdrop-blur-sm border border-slate-200 px-4 py-2 rounded-full z-10 shadow-sm">
+              <div className="absolute top-4 left-4 bg-white/90 backdrop-blur-sm border border-slate-200 px-4 py-2 rounded-full z-20 shadow-sm">
                 <span className="text-xs font-bold uppercase text-slate-700">Ubicación GPS</span>
               </div>
               {step1?.latitud && step1?.longitud ? (
-                <div className="w-full h-full relative flex flex-col items-center justify-center">
-                  <div className="w-full h-full bg-slate-200 border border-slate-300 rounded-lg flex flex-col items-center justify-center p-6 text-center">
-                    <span className="text-3xl mb-2">📍</span>
-                    <span className="text-xs font-bold text-slate-600 uppercase tracking-widest mb-1">Ubicación GPS Capturada</span>
-                    <span className="text-[10px] text-slate-500">El mapa interactivo está disponible en la versión digital.</span>
-                  </div>
-                  <div className="absolute bottom-4 right-4 bg-white/95 backdrop-blur-md border border-slate-200 px-4 py-2 rounded-lg text-xs font-black z-20 flex flex-col shadow-lg text-slate-700">
+                <div className="w-full h-full relative flex flex-col items-center justify-center overflow-hidden rounded-lg bg-[#AAD3DF]">
+                  <StaticTileMap lat={step1.latitud} lon={step1.longitud} zoom={16} />
+                  <div className="absolute bottom-4 right-4 bg-white/95 backdrop-blur-md border border-slate-200 px-4 py-2 rounded-lg text-xs font-black z-30 flex flex-col shadow-lg text-slate-700">
                     <span>LAT: {step1.latitud}</span>
                     <span>LNG: {step1.longitud}</span>
                   </div>

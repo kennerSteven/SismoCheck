@@ -3,7 +3,10 @@ import logoUrl from '../../assets/contro.ico';
 import qatroLogoUrl from '../../assets/Qatro.png';
 import nmLogoUrl from '../../assets/NM.png';
 
+import useFormStore from '../../store/useFormStore';
+
 export default function FormHeader() {
+  const logout = useFormStore(state => state.logout);
   const currentDate = new Date().toLocaleDateString('es-ES', { 
     day: 'numeric', 
     month: 'long', 
@@ -46,7 +49,8 @@ export default function FormHeader() {
           Evaluación Previa de Construcción
         </h3>
         
-        <div className="relative">
+        <div className="relative flex items-center gap-2">
+
           <span className="font-mono text-sm sm:text-base font-medium px-4 py-1.5 bg-slate-100 rounded-md border border-slate-200">
             {currentDate}
           </span>

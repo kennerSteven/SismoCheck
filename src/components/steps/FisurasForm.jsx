@@ -3,9 +3,11 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import useFormStore from '../../store/useFormStore';
-import { DangerConfirmModal } from '../../utils/alerts';
+import { handleFormError } from '../../utils/alerts';
+import { DangerConfirmModal, Toast } from '../../utils/alerts';
+import { compressImage } from '../../utils/compressImage';
 
-const imageModules = import.meta.glob('../../assets/fotos/**/*.png', { eager: true });
+const imageModules = import.meta.glob('../../assets/fotos/**/*.{png,jpg,jpeg,svg}', { eager: true });
 const allImages = Object.fromEntries(
   Object.entries(imageModules).map(([path, mod]) => [path, mod.default || mod])
 );
@@ -78,81 +80,81 @@ const ELEMENTO_OPTIONS_ALL = [
   },
 ];
 
-const ELEMENTO_MAPPING = {
-  concreto: {
-    Columna: 'Columnas',
-    Viga: 'Vigas',
-    Muro: 'Muros',
-    Escaleras: 'Escaleras',
-    Piso: 'Pisos',
-    Techo: 'Techos'
-  },
-  madera: {
-    Columna: 'Columnas_pilotes',
-    Viga: 'Vigas',
-    Muro: 'Muros_paneles',
-    Piso: 'Pisos_madera',
-    Techo: 'Cubierta_madera'
-  },
-  metal: {
-    Columna: 'Columnas',
-    Viga: 'Vigas',
-    Muro: 'Paneles_cerramientos',
-    Techo: 'Cerchas_cubierta'
-  }
-};
+// Ya no es necesario ELEMENTO_MAPPING, usamos directamente elementoId
 
 const TIPO_OPTIONS_CONCRETO = [
-  { id: 'vertical', label: 'Vertical', match: 'Fisura_vertical' },
-  { id: 'horizontal', label: 'Horizontal', match: 'Fisura_horizontal' },
-  { id: 'diagonal', label: 'Diagonal', match: 'Fisura_diagonal' },
-  { id: 'escalonada', label: 'Escalonada', match: 'Fisura_escalonada' },
-  { id: 'cruzadas', label: 'Cruzadas (en X)', match: 'Fisuras_cruzadas_X' },
-  { id: 'telarana', label: 'Tipo telaraña', match: 'Fisuras_tipo_telarana' },
-  { id: 'panete', label: 'Solo en el pañete/acabado', match: 'Grieta_panete_acabado' },
+  { id: 'vertical', label: 'Vertical', match: 'vertical' },
+  { id: 'horizontal', label: 'Horizontal', match: 'horizontal' },
+  { id: 'diagonal', label: 'Diagonal', match: 'diagonal' },
+  { id: 'escalonada', label: 'Escalonada', match: 'escalonada' },
+  { id: 'cruzadas', label: 'Cruzadas (en X)', match: 'x_cruzada' },
+  { id: 'telarana', label: 'Tipo telaraña', match: 'mapa' },
+  { id: 'panete', label: 'Solo en el pañete/acabado', match: 'revoque' },
 ];
 
 const TIPO_OPTIONS_MADERA = [
-  { id: 'torcedura', label: 'Torcedura', match: 'Torcedura' },
-  { id: 'rajadura', label: 'Rajadura', match: 'Rajadura' },
-  { id: 'hueco', label: 'Hueco', match: 'Hueco' },
-  { id: 'horizontal_cortante', label: 'Fisura horizontal (cortante)', match: 'Fisura_horizontal_cortante' },
-  { id: 'diagonal_cortante', label: 'Fisura diagonal (cortante)', match: 'Fisura_diagonal_cortante' },
+  { id: 'torcedura', label: 'Torcedura', match: 'torcedura_madera' },
+  { id: 'rajadura', label: 'Rajadura', match: 'rajadura' },
+  { id: 'hueco', label: 'Hueco', match: 'hueco' },
+  { id: 'horizontal_cortante', label: 'Fisura horizontal (cortante)', match: 'fisura_horizontal_madera' },
+  { id: 'diagonal_cortante', label: 'Fisura diagonal (cortante)', match: 'fisura_diagonal_madera' },
 ];
 
 const TIPO_OPTIONS_METAL = [
-  { id: 'torcedura', label: 'Torcedura', match: 'Torcedura' },
-  { id: 'corrosion', label: 'Corrosión u óxido', match: 'Corrosion_oxido' },
-  { id: 'abolladura', label: 'Abolladura', match: 'Abolladura' },
-  { id: 'desplome', label: 'Desplome', match: 'Desplome' },
-  { id: 'separacion', label: 'Separación piso-techo', match: 'Separacion_piso_techo' },
-  { id: 'falla_uniones', label: 'Falla en uniones o soldaduras', match: 'Falla_uniones_soldaduras' },
+  { id: 'torcedura', label: 'Torcedura', match: 'torcedura_metal' },
+  { id: 'corrosion', label: 'Corrosión u óxido', match: 'corrosion_metal' },
+  { id: 'abolladura', label: 'Abolladura', match: 'abolladura' },
+  { id: 'desplome', label: 'Desplome', match: 'desplome' },
+  { id: 'separacion', label: 'Separación piso-techo', match: 'separacion_piso_techo' },
+  { id: 'falla_uniones', label: 'Falla en uniones o soldaduras', match: 'falla_uniones' },
 ];
 
 const TIPO_OPTIONS_PREFAB = [
   ...TIPO_OPTIONS_CONCRETO,
-  { id: 'separacion_paneles', label: 'Separación entre paneles', match: 'Separacion_paneles' }
+  { id: 'separacion_paneles', label: 'Separación entre paneles', match: 'separacion_paneles' }
 ];
 
-const getTipoList = (grupo) => {
+const getTipoList = (grupo, elementoId) => {
   if (grupo === 'madera') return TIPO_OPTIONS_MADERA;
-  if (grupo === 'metal') return TIPO_OPTIONS_METAL;
+  if (grupo === 'metal') {
+    if (elementoId === 'Muro' || elementoId === 'Piso') return TIPO_OPTIONS_CONCRETO;
+    return TIPO_OPTIONS_METAL;
+  }
   if (grupo === 'prefab') return TIPO_OPTIONS_PREFAB;
   return TIPO_OPTIONS_CONCRETO;
 };
 
 const getFisuraImage = (grupo, elementoId, tipoMatch) => {
-  if (grupo === 'prefab') grupo = 'concreto'; // Prefab comparte mayoría con concreto y usa genérico para panel
-  const elementPrefix = ELEMENTO_MAPPING[grupo]?.[elementoId];
-  if (!elementPrefix) return null;
+  let isPrefab = false;
+  if (grupo === 'prefab') {
+    isPrefab = true;
+    grupo = 'concreto';
+  }
   
-  let folderMatch = '03_Fisuras_grietas';
-  if (grupo === 'madera') folderMatch = '01_Danos_elementos_madera';
-  if (grupo === 'metal') folderMatch = '02_Danos_elementos_metalicos';
+  if (grupo === 'metal' && (elementoId === 'Muro' || elementoId === 'Piso')) {
+    grupo = 'concreto';
+  }
+  
+  let folderMatch = '05_Fisuras_concreto_por_elemento';
+  if (grupo === 'madera') folderMatch = '06_Fisuras_madera_por_elemento';
+  if (grupo === 'metal') folderMatch = '07_Fisuras_metal_por_elemento';
 
-  const matchKey = Object.keys(allImages).find(key => 
-    key.includes(folderMatch) && key.includes(elementPrefix) && key.includes(tipoMatch)
+  let matchKey = Object.keys(allImages).find(key => 
+    key.includes(folderMatch) && key.includes(`/${elementoId}/`) && key.includes(tipoMatch)
   );
+
+  if (!matchKey) {
+     let genericFolder = '08_Fisuras_concreto_generico';
+     if (grupo === 'madera') genericFolder = '09_Fisuras_madera_generico';
+     if (grupo === 'metal') genericFolder = '10_Fisuras_metal_generico';
+     
+     if (isPrefab && tipoMatch === 'separacion_paneles') genericFolder = '11_Fisuras_prefab';
+
+     matchKey = Object.keys(allImages).find(key => 
+       key.includes(genericFolder) && key.includes(tipoMatch)
+     );
+  }
+
   return matchKey ? allImages[matchKey] : null;
 };
 
@@ -210,8 +212,8 @@ export default function FisurasForm({ onNext }) {
   }, [tipoPisoTierra]);
 
   const tipoOptions = useMemo(() => {
-    return getTipoList(grupoEstructural);
-  }, [grupoEstructural]);
+    return getTipoList(grupoEstructural, tempFisura.elemento);
+  }, [grupoEstructural, tempFisura.elemento]);
 
   const { handleSubmit } = useForm({
     resolver: zodResolver(fisurasSchema),
@@ -266,15 +268,24 @@ export default function FisurasForm({ onNext }) {
     }
   };
 
-  const handleFileChange = (e) => {
-    if (e.target.files && e.target.files.length > 0) {
-      const file = e.target.files[0];
-      setTempFisura(prev => ({ 
-        ...prev, 
-        foto: file, 
-        fotoName: file.name,
-        fotoUrl: URL.createObjectURL(file)
-      }));
+  const handleFileChange = async (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      if (file.size > 10 * 1024 * 1024) {
+        Toast.fire({ icon: 'warning', title: 'La foto debe pesar menos de 10MB.' });
+        return;
+      }
+      try {
+        const base64Light = await compressImage(file, 600, 600, 0.6);
+        setTempFisura(prev => ({ 
+          ...prev, 
+          foto: file, 
+          fotoName: file.name,
+          fotoUrl: base64Light
+        }));
+      } catch (err) {
+        Toast.fire({ icon: 'error', title: 'Error procesando la foto.' });
+      }
     }
   };
 
@@ -445,10 +456,10 @@ export default function FisurasForm({ onNext }) {
                          <path strokeLinecap="round" strokeLinejoin="round" d="M6.827 6.175A2.31 2.31 0 015.186 7.23c-.38.054-.757.112-1.134.175C2.999 7.58 2.25 8.507 2.25 9.574V18a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9.574c0-1.067-.75-1.994-1.802-2.169a47.865 47.865 0 00-1.134-.175 2.31 2.31 0 01-1.64-1.055l-.822-1.316a2.192 2.192 0 00-1.736-1.039 48.774 48.774 0 00-5.232 0 2.192 2.192 0 00-1.736 1.039l-.821 1.316z" />
                          <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 12.75a4.5 4.5 0 11-9 0 4.5 4.5 0 019 0zM18.75 10.5h.008v.008h-.008V10.5z" />
                        </svg>
-                       <span className="text-slate-600 font-medium text-sm">Toque aquí para adjuntar o tomar una foto</span>
+                       <span className="text-slate-600 font-medium text-sm">Toque aquí para tomar una foto</span>
                      </div>
                    )}
-                   <input type="file" id="fotoFisura" accept="image/*,capture=camera" className="hidden" onChange={handleFileChange} />
+                   <input type="file" id="fotoFisura" accept="image/*" capture="environment" className="hidden" onChange={handleFileChange} />
                 </label>
               </div>
 
@@ -543,7 +554,7 @@ export default function FisurasForm({ onNext }) {
 
   // --- VISTA 1: PRINCIPAL ---
   return (
-    <form id="step-form" onSubmit={handleSubmit(onSubmit)} className="w-full text-slate-700 animate-in fade-in duration-300">
+    <form id="step-form" onSubmit={handleSubmit(onSubmit, handleFormError)} className="w-full text-slate-700 animate-in fade-in duration-300">
       <div className="mb-8">
         <h2 className="text-2xl md:text-3xl font-extrabold text-slate-900 tracking-tight">Fisuras, grietas, fallas</h2>
         <p className="text-slate-500 mt-2 text-base md:text-lg">

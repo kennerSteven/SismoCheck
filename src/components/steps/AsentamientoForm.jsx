@@ -3,11 +3,12 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import useFormStore from '../../store/useFormStore';
+import { handleFormError } from '../../utils/alerts';
 
-import imgUniforme from '../../assets/fotos/05_Terreno_cimentacion_asentamientos/Asentamientos_deformaciones/5_Asentamiento_uniforme_parejo.png';
-import imgDiferencial from '../../assets/fotos/05_Terreno_cimentacion_asentamientos/Asentamientos_deformaciones/6_Asentamiento_diferencial.png';
-import imgInclinacion from '../../assets/fotos/05_Terreno_cimentacion_asentamientos/Asentamientos_deformaciones/7_Inclinacion_general_construccion.png';
-import imgLocalizado from '../../assets/fotos/05_Terreno_cimentacion_asentamientos/Asentamientos_deformaciones/8_Hundimiento_localizado.png';
+import imgUniforme from '../../assets/fotos/04_Asentamiento/uniforme__Asentamiento uniforme (parejo).jpg';
+import imgDiferencial from '../../assets/fotos/04_Asentamiento/diferencial__Asentamiento diferencial (un lado baja más que el otro).jpg';
+import imgInclinacion from '../../assets/fotos/04_Asentamiento/inclinacion__Inclinación general de toda la construcción (inclinación muy notoria).jpg';
+import imgLocalizado from '../../assets/fotos/04_Asentamiento/localizado__Hundimiento localizado (una sola zona, esquina o columna dentro de la construcción).jpg';
 
 import videoCanica from '../../assets/Media/inclinacion en suelos.mp4';
 import videoPlomada from '../../assets/Media/Inclinacion vertical.mp4';
@@ -48,6 +49,8 @@ const OPTIONS = [
 ];
 
 const asentamientoSchema = z.object({
+  realizoPruebaCanica: z.string().min(1, "Seleccione una opción"),
+  realizoPruebaPlomada: z.string().min(1, "Seleccione una opción"),
   uniforme: z.string().min(1, "Seleccione una opción"),
   diferencial: z.string().min(1, "Seleccione una opción"),
   inclinacion: z.string().min(1, "Seleccione una opción"),
@@ -59,6 +62,8 @@ export default function AsentamientoForm({ onNext }) {
   const { formData, setFormData } = useFormStore();
 
   const defaultValues = {
+    realizoPruebaCanica: formData.step4?.realizoPruebaCanica || '',
+    realizoPruebaPlomada: formData.step4?.realizoPruebaPlomada || '',
     uniforme: formData.step4?.uniforme || '',
     diferencial: formData.step4?.diferencial || '',
     inclinacion: formData.step4?.inclinacion || '',
@@ -77,7 +82,7 @@ export default function AsentamientoForm({ onNext }) {
   };
 
   return (
-    <form id="step-form" onSubmit={handleSubmit(onSubmit)} className="w-full text-slate-700 animate-in fade-in duration-300">
+    <form id="step-form" onSubmit={handleSubmit(onSubmit, handleFormError)} className="w-full text-slate-700 animate-in fade-in duration-300">
       
       {/* HEADER */}
       <div className="mb-8">
@@ -89,42 +94,99 @@ export default function AsentamientoForm({ onNext }) {
 
       {/* INSTRUCCIONES INICIALES (PRUEBAS) */}
       <div className="grid md:grid-cols-2 gap-4 mb-10">
-        <div className="bg-blue-50/50 border border-blue-100 rounded-xl p-5 shadow-sm flex flex-col">
-          <h3 className="font-bold text-blue-900 mb-2 flex items-center gap-2">
-            <span className="bg-blue-200 text-blue-800 w-6 h-6 rounded-full flex items-center justify-center text-xs">1</span>
-            PRUEBA 1... LA CANICA
-          </h3>
-          <p className="text-sm text-slate-600 leading-relaxed mb-4">
-            Coloque una canica o elemento esférico en el piso. Si rueda hacia un lado específico de manera acelerada, puede indicar un hundimiento o desnivel importante en esa dirección.
-          </p>
-          <div className="mt-auto overflow-hidden rounded-lg border border-blue-200">
+        
+        {/* TARJETA CANICA */}
+        <div className="bg-white border-2 border-slate-200 rounded-2xl flex flex-col overflow-hidden shadow-sm hover:border-[#1F3B5F] hover:shadow-md transition-all">
+          <div className="w-full relative bg-slate-100">
             <video 
               src={videoCanica} 
               autoPlay 
               loop 
               muted 
               playsInline 
-              className="w-full h-auto object-cover"
+              className="w-full h-48 md:h-56 object-cover"
             />
+            <div className="absolute top-4 left-4 bg-[#1F3B5F] text-white text-[10px] md:text-xs font-bold px-3 py-1.5 rounded-full shadow-md uppercase tracking-wider flex items-center gap-2">
+              <span className="bg-white/20 rounded-full w-5 h-5 flex items-center justify-center">1</span>
+              La Canica
+            </div>
+          </div>
+          <div className="p-5 md:p-6 flex flex-col flex-1">
+            <p className="text-slate-700 font-medium text-sm mb-4 leading-relaxed">
+              Suéltela en el centro del cuarto, sin empujarla. Si rueda sola hacia el mismo lado, ahí está más bajo.
+            </p>
+            <p className="text-[#a5432b] text-sm mb-6 leading-relaxed">
+              <span className="font-bold">Importante:</span> no haga esta prueba en el baño. El piso del baño tiene una pendiente hecha a propósito para que el agua corra hacia el desagüe, así que la canica siempre rodará, aunque no haya ningún problema de asentamiento. Hágala en una habitación, sala, comedor u otro cuarto con piso plano.
+            </p>
+            <div className="mt-auto bg-slate-50 p-4 rounded-xl border border-slate-100">
+              <label className="block text-[10px] md:text-xs font-mono font-bold text-slate-500 uppercase tracking-tight mb-2 leading-tight">
+                ¿USTED REALIZÓ ESTA PRUEBA (LA DE LA CANICA) EN LA CONSTRUCCIÓN?
+              </label>
+              <select
+                className={`w-full px-4 py-3 rounded-xl border-2 bg-white text-slate-800 text-sm font-medium focus:outline-none transition-colors appearance-none ${
+                  errors.realizoPruebaCanica ? 'border-red-400 focus:border-red-500 bg-red-50' : 'border-slate-200 hover:border-slate-300 focus:border-[#1F3B5F]'
+                }`}
+                style={{
+                  backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%23334155' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e")`,
+                  backgroundPosition: 'right 1rem center',
+                  backgroundRepeat: 'no-repeat',
+                  backgroundSize: '1.25em 1.25em',
+                  paddingRight: '2.5rem'
+                }}
+                {...register('realizoPruebaCanica')}
+              >
+                <option value="">Seleccione...</option>
+                <option value="no">No, no la realicé</option>
+                <option value="si">Sí, la realicé</option>
+              </select>
+              {errors.realizoPruebaCanica && <span className="text-red-500 text-xs mt-2 block font-bold">{errors.realizoPruebaCanica.message}</span>}
+            </div>
           </div>
         </div>
-        <div className="bg-slate-50 border border-slate-200 rounded-xl p-5 shadow-sm flex flex-col">
-          <h3 className="font-bold text-slate-700 mb-2 flex items-center gap-2">
-            <span className="bg-slate-200 text-slate-700 w-6 h-6 rounded-full flex items-center justify-center text-xs">2</span>
-            PRUEBA 2... LA PLOMADA
-          </h3>
-          <p className="text-sm text-slate-600 leading-relaxed mb-4">
-            Desde la parte superior de un muro o columna, deje caer una plomada (o un peso atado a una cuerda). Si la distancia entre la cuerda y la pared varía drásticamente abajo, la construcción podría estar inclinada.
-          </p>
-          <div className="mt-auto overflow-hidden rounded-lg border border-slate-200">
+
+        {/* TARJETA PLOMADA */}
+        <div className="bg-white border-2 border-slate-200 rounded-2xl flex flex-col overflow-hidden shadow-sm hover:border-[#1F3B5F] hover:shadow-md transition-all">
+          <div className="w-full relative bg-slate-100">
             <video 
               src={videoPlomada} 
               autoPlay 
               loop 
               muted 
               playsInline 
-              className="w-full h-auto object-cover"
+              className="w-full h-48 md:h-56 object-cover"
             />
+            <div className="absolute top-4 left-4 bg-[#1F3B5F] text-white text-[10px] md:text-xs font-bold px-3 py-1.5 rounded-full shadow-md uppercase tracking-wider flex items-center gap-2">
+              <span className="bg-white/20 rounded-full w-5 h-5 flex items-center justify-center">2</span>
+              La Plomada
+            </div>
+          </div>
+          <div className="p-5 md:p-6 flex flex-col flex-1">
+            <p className="text-slate-700 font-medium text-sm mb-6 leading-relaxed">
+              Cuelgue un hilo con peso desde arriba de la pared. Si se separa de la pared, hay inclinación.
+            </p>
+            <div className="mt-auto bg-slate-50 p-4 rounded-xl border border-slate-100">
+              <label className="block text-[10px] md:text-xs font-mono font-bold text-slate-500 uppercase tracking-tight mb-2 leading-tight">
+                ¿USTED REALIZÓ ESTA PRUEBA (LA DE LA PLOMADA) EN LA CONSTRUCCIÓN?
+              </label>
+              <select
+                className={`w-full px-4 py-3 rounded-xl border-2 bg-white text-slate-800 text-sm font-medium focus:outline-none transition-colors appearance-none ${
+                  errors.realizoPruebaPlomada ? 'border-red-400 focus:border-red-500 bg-red-50' : 'border-slate-200 hover:border-slate-300 focus:border-[#1F3B5F]'
+                }`}
+                style={{
+                  backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%23334155' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e")`,
+                  backgroundPosition: 'right 1rem center',
+                  backgroundRepeat: 'no-repeat',
+                  backgroundSize: '1.25em 1.25em',
+                  paddingRight: '2.5rem'
+                }}
+                {...register('realizoPruebaPlomada')}
+              >
+                <option value="">Seleccione...</option>
+                <option value="no">No, no la realicé</option>
+                <option value="si">Sí, la realicé</option>
+              </select>
+              {errors.realizoPruebaPlomada && <span className="text-red-500 text-xs mt-2 block font-bold">{errors.realizoPruebaPlomada.message}</span>}
+            </div>
           </div>
         </div>
       </div>

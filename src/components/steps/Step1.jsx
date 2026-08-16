@@ -3,7 +3,9 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import useFormStore from '../../store/useFormStore';
+import { handleFormError } from '../../utils/alerts';
 import { Toast } from '../../utils/alerts';
+import { compressImage } from '../../utils/compressImage';
 
 const zNum = (msg, minVal, minMsg) => 
   z.any()
@@ -137,11 +139,11 @@ export default function Step1({ onNext }) {
   const onSubmit = async (data) => {
     let fotoBase64 = null;
     if (fotoFachadaFiles && fotoFachadaFiles.length > 0) {
-      fotoBase64 = await new Promise((resolve) => {
-        const reader = new FileReader();
-        reader.onloadend = () => resolve(reader.result);
-        reader.readAsDataURL(fotoFachadaFiles[0]);
-      });
+      try {
+        fotoBase64 = await compressImage(fotoFachadaFiles[0], 600, 600, 0.6);
+      } catch (e) {
+        console.error("Error compressing facade image:", e);
+      }
     }
     
     setFormData('step1', {
@@ -177,7 +179,7 @@ export default function Step1({ onNext }) {
   };
 
   return (
-    <form id="step-form" onSubmit={handleSubmit(onSubmit)} className="w-full text-slate-700">
+    <form id="step-form" onSubmit={handleSubmit(onSubmit, handleFormError)} className="w-full text-slate-700">
       
       {/* SECCIÓN: Datos de quien diligencia */}
       <div className="mb-10 md:mb-12">
@@ -431,6 +433,7 @@ export default function Step1({ onNext }) {
           <input 
             type="file" 
             accept="image/*"
+            capture="environment"
             className={`absolute inset-0 w-full h-full opacity-0 cursor-pointer ${previews.length > 0 ? 'z-0 pointer-events-none' : 'z-10'}`}
             {...register('fotoFachada')}
           />
@@ -439,7 +442,7 @@ export default function Step1({ onNext }) {
             <div className="relative w-full h-full flex flex-col items-center justify-center cursor-pointer group pointer-events-none">
               <div className="flex flex-col items-center text-center">
                 <svg className="w-10 h-10 text-slate-400 group-hover:text-blue-500 mb-3 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
-                <span className="text-base font-bold text-slate-600 group-hover:text-blue-700 transition-colors">Toca para seleccionar foto</span>
+                <span className="text-base font-bold text-slate-600 group-hover:text-blue-700 transition-colors">Toca para tomar foto</span>
                 <span className="text-xs font-semibold text-slate-400 mt-1">1 imagen (PNG, JPG)</span>
               </div>
             </div>

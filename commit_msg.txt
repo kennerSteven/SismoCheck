@@ -1,0 +1,7 @@
+Correcciones aplicadas
+
+Se corrigió el problema que permitía que el navegador tradujera accidentalmente algunos campos, provocando que aparecieran con nombres extraños.
+Se implementaron alertas cuando hay campos faltantes.
+Se cambiaron las imágenes.
+Se implementó la selección de opciones en las pruebas de canica y plomada.
+Se mejoraron los tiempos de carga al guardar la información y generar el PDF.

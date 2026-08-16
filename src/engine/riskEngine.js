@@ -29,19 +29,21 @@ export function peor(a, b) {
  * @param {string} f.tamano 'w1' | 'w2' | 'w3' | 'w4' | 'w5'
  * @param {string} f.evolucion 'no_sabe' | 'igual' | 'lento' | 'notorio'
  * @param {string|null} f.aceros 'Sí' | 'No' | 'No sabe' | null
- * @param {string|null} f.corrosion 'Sí' | 'No' | 'No sabe' | null
  * @param {string|null} f.sonido 'Sí' | 'No' | 'No sabe' | null
  * @param {string} sistema
  * @returns {Color}
  */
 export function clasificarFisura(f, sistema) {
-  // 1. Caso Base (Corte temprano)
+  // 1. Corte temprano (Daño superficial / fisuras muy pequeñas)
+  // Aplica para TODOS los sistemas constructivos sin importar evolución
   if (f.tamano === 'w1' || f.tamano === 'w2') {
     return VERDE;
   }
 
-  // 2. Valor de Partida
+  // 2. Valor Base para fisuras más grandes
   let color = AMARILLO;
+
+  // 2. Evolución
   if (f.evolucion === 'notorio') {
     color = peor(color, NARANJA);
   }
@@ -147,7 +149,7 @@ export function calcularValoracion(fichaCompleta) {
 
   // 3. Puntaje por Evaluación del Suelo
   let score_suelo = 0;
-  const graves = ['deslizamiento', 'caida_rocas', 'licuefaccion'];
+  const graves = ['deslizamiento', 'caida_rocas', 'licuefaccion', 'cimentacion_expuesta'];
   for (const item of graves) {
     const resp = suelo[item];
     if (resp === 'Sí') {
@@ -156,12 +158,6 @@ export function calcularValoracion(fichaCompleta) {
     } else if (resp === 'No sabe') {
       score_suelo += 1;
     }
-  }
-
-  if (suelo.cimentacion_expuesta === 'Sí') {
-    score_suelo += 3;
-  } else if (suelo.cimentacion_expuesta === 'No sabe') {
-    score_suelo += 1;
   }
 
   // 4. Puntaje por Elementos No Estructurales
@@ -176,7 +172,10 @@ export function calcularValoracion(fichaCompleta) {
   };
 
   for (const [grupo, peso] of Object.entries(elementosPesos)) {
-    const hallazgos = elementosNoEstructurales[grupo] || [];
+    let hallazgos = elementosNoEstructurales[grupo] || [];
+    // Filtrar "Sin daños aparentes" para que no cuente como un hallazgo negativo
+    hallazgos = hallazgos.filter(h => h !== 'Sin daños aparentes');
+    
     score_elementos += peso * hallazgos.length;
 
     // Reglas especiales de seguridad

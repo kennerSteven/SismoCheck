@@ -20,12 +20,12 @@ const WizardLayout = ({ children }) => {
       {/* Scrollable Content Container */}
       <main className="flex-1 w-full max-w-4xl mx-auto md:py-8 px-0 md:px-6 flex flex-col">
         <div className="bg-white md:rounded-3xl md:shadow-xl md:shadow-slate-200/50 flex-1 flex flex-col overflow-hidden relative md:border border-slate-100">
-          
+
           {/* Main Form Area */}
-          <div className="flex-1 overflow-y-auto px-5 py-6 md:px-10 md:py-8 pb-32 md:pb-10">
+          <div className="flex-1 overflow-y-auto px-5 py-6 md:px-10 md:py-8 pb-32 md:pb-10 relative z-10">
             <div className="max-w-3xl mx-auto w-full">
               {currentStep !== 7 && <FormHeader />}
-              <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 ease-out">
+              <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 ease-out relative z-10">
                 {children}
               </div>
             </div>
@@ -60,6 +60,10 @@ const WizardLayout = ({ children }) => {
                     </svg>
                   </CustomButton>
                 </div>
+              </div>
+              <div className="mt-3 flex items-center justify-center gap-2 text-center text-[10px] sm:text-xs text-slate-400 font-medium uppercase tracking-widest w-full opacity-90">
+                <img src="/contro.ico" alt="Controller Logo" className="w-4 h-4 object-contain opacity-80" />
+                <span>Producto desarrollado por Controller</span>
               </div>
             </div>
           )}

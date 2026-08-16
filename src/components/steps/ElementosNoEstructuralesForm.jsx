@@ -3,6 +3,7 @@ import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import useFormStore from '../../store/useFormStore';
+import { handleFormError } from '../../utils/alerts';
 
 // --- DICCIONARIO DE DATOS ---
 const GRUPOS = [
@@ -223,7 +224,7 @@ export default function ElementosNoEstructuralesForm({ onNext }) {
   };
 
   return (
-    <form id="step-form" onSubmit={handleSubmit(onSubmit)} className="w-full text-slate-700 animate-in fade-in duration-300">
+    <form id="step-form" onSubmit={handleSubmit(onSubmit, handleFormError)} className="w-full text-slate-700 animate-in fade-in duration-300">
       
       {/* HEADER */}
       <div className="mb-6">

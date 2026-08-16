@@ -3,11 +3,12 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import useFormStore from '../../store/useFormStore';
+import { handleFormError } from '../../utils/alerts';
 
-import imgDeslizamiento from '../../assets/fotos/05_Terreno_cimentacion_asentamientos/Condiciones_terreno_cimentacion/1_Deslizamiento_tierras.png';
-import imgCaidaRocas from '../../assets/fotos/05_Terreno_cimentacion_asentamientos/Condiciones_terreno_cimentacion/2_Caida_rocas.png';
-import imgLicuefaccion from '../../assets/fotos/05_Terreno_cimentacion_asentamientos/Condiciones_terreno_cimentacion/3_Licuefaccion.png';
-import imgCimentacionExpuesta from '../../assets/fotos/05_Terreno_cimentacion_asentamientos/Condiciones_terreno_cimentacion/4_Cimentacion_expuesta.png';
+import imgDeslizamiento from '../../assets/fotos/03_Evaluacion_suelo/deslizamiento__Deslizamiento de tierras.jpg';
+import imgCaidaRocas from '../../assets/fotos/03_Evaluacion_suelo/caida_rocas__Caída de rocas.jpg';
+import imgLicuefaccion from '../../assets/fotos/03_Evaluacion_suelo/licuefaccion__Licuefacción.jpg';
+import imgCimentacionExpuesta from '../../assets/fotos/03_Evaluacion_suelo/cimentacion_expuesta__Cimentación expuesta.jpg';
 
 // --- DICCIONARIO DE DATOS ---
 const EVALUACION_CARDS = [
@@ -74,7 +75,7 @@ export default function EvaluacionSueloForm({ onNext }) {
   };
 
   return (
-    <form id="step-form" onSubmit={handleSubmit(onSubmit)} className="w-full text-slate-700 animate-in fade-in duration-300">
+    <form id="step-form" onSubmit={handleSubmit(onSubmit, handleFormError)} className="w-full text-slate-700 animate-in fade-in duration-300">
       
       {/* HEADER */}
       <div className="mb-8">

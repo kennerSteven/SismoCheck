@@ -1,6 +1,9 @@
 import React, { useState } from 'react';
 import { AlertTriangle, User, Phone, Ban, ArrowRight } from 'lucide-react';
-import principalImg from '../../assets/Principal.png';
+import imgEjemplo1 from '../../assets/fotos/13_Alerta_colapso/ejemplo_1.jpg';
+import imgEjemplo2 from '../../assets/fotos/13_Alerta_colapso/ejemplo_2.jpg';
+import imgEjemplo3 from '../../assets/fotos/13_Alerta_colapso/ejemplo_3.jpg';
+import imgEjemplo4 from '../../assets/fotos/13_Alerta_colapso/ejemplo_4.jpg';
 
 export default function ModalColapsoPrevio() {
   const [estado, setEstado] = useState('preguntando'); // 'preguntando' | 'inhabitable' | 'cerrado'
@@ -55,11 +58,12 @@ export default function ModalColapsoPrevio() {
           </p>
 
           <div className="mt-6 rounded-2xl overflow-hidden border-2 border-gray-100 bg-gray-50 p-2 shadow-inner">
-            <img 
-              src={principalImg} 
-              alt="Ejemplos de colapso total o parcial" 
-              className="w-full h-auto object-cover rounded-xl"
-            />
+            <div className="grid grid-cols-2 gap-2">
+              <img src={imgEjemplo1} alt="Ejemplo 1" className="w-full h-auto object-cover rounded-lg" />
+              <img src={imgEjemplo2} alt="Ejemplo 2" className="w-full h-auto object-cover rounded-lg" />
+              <img src={imgEjemplo3} alt="Ejemplo 3" className="w-full h-auto object-cover rounded-lg" />
+              <img src={imgEjemplo4} alt="Ejemplo 4" className="w-full h-auto object-cover rounded-lg" />
+            </div>
           </div>
         </div>
 

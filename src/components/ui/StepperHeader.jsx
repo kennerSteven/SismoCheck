@@ -21,7 +21,7 @@ const StepperHeader = ({ currentStep }) => {
       await firebaseLogout();
       logoutStore();
     } catch (error) {
-      console.error('Error al cerrar sesión:', error);
+      // Ignorar error de cierre de sesión
     }
   };
 

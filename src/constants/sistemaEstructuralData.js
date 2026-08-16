@@ -1,13 +1,13 @@
-import imgMurosConcreto from '../assets/fotos/06_Sistemas_constructivos/1_Muros_carga_concreto.png';
-import imgMampConfinada from '../assets/fotos/06_Sistemas_constructivos/2_Mamposteria_confinada.png';
-import imgMampEstructural from '../assets/fotos/06_Sistemas_constructivos/3_Mamposteria_estructural_reforzada.png';
-import imgMampSimple from '../assets/fotos/06_Sistemas_constructivos/4_Mamposteria_no_reforzada_simple.png';
-import imgConstTradicional from '../assets/fotos/06_Sistemas_constructivos/5_Construccion_tradicional_bahareque_tapia_adobe_guadua.png';
-import imgConstPalafitica from '../assets/fotos/06_Sistemas_constructivos/6_Construccion_palafitica.png';
-import imgConstPrefab from '../assets/fotos/06_Sistemas_constructivos/7_Construccion_prefabricada.png';
-import imgMaderaPesada from '../assets/fotos/06_Sistemas_constructivos/8_Madera_pesada.png';
-import imgEstMetalica from '../assets/fotos/06_Sistemas_constructivos/9_Estructura_metalica.png';
-import imgOtroMixto from '../assets/fotos/06_Sistemas_constructivos/10_Otro_mixto_no_se_identificar.png';
+import imgMurosConcreto from '../assets/fotos/01_Sistema_constructivo/muros_carga_concreto__Muros de carga en concreto.jpg';
+import imgMampConfinada from '../assets/fotos/01_Sistema_constructivo/mamp_confinada__Mampostería confinada.jpg';
+import imgMampEstructural from '../assets/fotos/01_Sistema_constructivo/mamp_estructural__Mampostería estructural (reforzada).jpg';
+import imgMampSimple from '../assets/fotos/01_Sistema_constructivo/mamp_no_reforzada__Mampostería no reforzada o simple.jpg';
+import imgConstTradicional from '../assets/fotos/01_Sistema_constructivo/tradicional__Construcción tradicional (bahareque, tapia pisada, adobe, guadua).jpg';
+import imgConstPalafitica from '../assets/fotos/01_Sistema_constructivo/palafitica__Construcción palafítica.jpg';
+import imgConstPrefab from '../assets/fotos/01_Sistema_constructivo/prefab__Construcción prefabricada.jpg';
+import imgMaderaPesada from '../assets/fotos/01_Sistema_constructivo/madera_pesada__Madera pesada.jpg';
+import imgEstMetalica from '../assets/fotos/01_Sistema_constructivo/estructura_metalica__Estructura metálica.jpg';
+import imgOtroMixto from '../assets/fotos/01_Sistema_constructivo/otro__Otro - no sé identificar - mixto.jpg';
 
 export const CONSTRUCCION_OPTIONS = {
   muros_concreto: {
@@ -72,10 +72,10 @@ export const CONSTRUCCION_OPTIONS = {
   }
 };
 
-import imgCubiertaZinc from '../assets/fotos/04_Pisos_y_cubiertas/Tipo_de_cubierta/1_Cubierta_liviana_teja_zinc.png';
-import imgCubiertaLosa from '../assets/fotos/04_Pisos_y_cubiertas/Tipo_de_cubierta/2_Cubierta_lisa.png';
-import imgTejaBarro from '../assets/fotos/04_Pisos_y_cubiertas/Tipo_de_cubierta/3_Teja_de_barro.png';
-import imgTechoOrganico from '../assets/fotos/04_Pisos_y_cubiertas/Tipo_de_cubierta/4_Techo_organico.png';
+import imgCubiertaZinc from '../assets/fotos/02_Tipo_cubierta/liviana__Cubierta liviana o teja de zinc.jpg';
+import imgCubiertaLosa from '../assets/fotos/02_Tipo_cubierta/lisa__Cubierta lisa.jpg';
+import imgTejaBarro from '../assets/fotos/02_Tipo_cubierta/barro__Teja de barro.jpg';
+import imgTechoOrganico from '../assets/fotos/02_Tipo_cubierta/organico__Techo orgánico.jpg';
 
 export const CUBIERTA_OPTIONS = {
   cubierta_liviana_zinc: {

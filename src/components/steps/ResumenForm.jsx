@@ -4,8 +4,7 @@ import jsPDF from 'jspdf';
 import html2pdf from 'html2pdf.js';
 import useFormStore from '../../store/useFormStore';
 import { Toast } from '../../utils/alerts';
-import { db, storage } from '../../lib/firebase';
-import { ref, uploadBytes, uploadString, getDownloadURL } from 'firebase/storage';
+import { db } from '../../lib/firebase';
 import { collection, doc, addDoc, updateDoc, serverTimestamp, arrayUnion } from 'firebase/firestore';
 import CryptoJS from 'crypto-js';
 import { calcularValoracion, clasificarFisura, AMARILLO, NARANJA, ROJO, getColorStyles, getRecomendacionFisura, getFisuraLabel } from '../../engine/riskEngine';
@@ -51,9 +50,8 @@ const YesNoBadge = ({ label, value }) => {
 
 const mapBoolean = (val) => {
   if (val === 'si' || val === 'Sí') return 'Sí';
-  if (val === 'no' || val === 'No') return 'No';
   if (val === 'nosabe' || val === 'nose' || val === 'No sabe') return 'No sabe';
-  return 'No sabe';
+  return 'No';
 };
 
 const mapSistema = (uiSistema) => {
@@ -98,22 +96,18 @@ export default function ResumenForm() {
     try {
       setIsGenerating(true);
       // --- 1. GENERAR Y DESCARGAR PDF LOCALMENTE PRIMERO ---
-      console.log('Iniciando generación de PDF...');
-      Toast.fire({ icon: 'info', title: 'Generando PDF, por favor espere...', timer: 3000 });
 
       const node = pdfRef.current;
       if (!node) {
         throw new Error("Referencia del PDF no encontrada");
       }
 
-      console.log('Creando instancia jsPDF...');
       const pdf = new jsPDF('p', 'mm', 'a4');
       const pdfWidth = pdf.internal.pageSize.getWidth();
       const pdfHeight = pdf.internal.pageSize.getHeight();
       const margin = 10;
       
       const blocks = Array.from(node.querySelectorAll('.pdf-block'));
-      console.log('Bloques encontrados:', blocks.length);
       if (blocks.length === 0) {
         throw new Error("No se encontraron bloques para el PDF");
       }
@@ -123,7 +117,6 @@ export default function ResumenForm() {
       const scale = (pdfWidth - 2 * margin) / 794;
 
       for (let i = 0; i < blocks.length; i++) {
-        console.log(`Renderizando bloque ${i + 1}/${blocks.length}...`);
         const block = blocks[i];
         const blockRect = block.getBoundingClientRect();
         const xOffset = blockRect.left - containerRect.left;
@@ -146,7 +139,6 @@ export default function ResumenForm() {
           });
           pdf.addImage(dataUrl, 'JPEG', blockX, currentY, scaledWidth, scaledHeight, undefined, 'FAST');
         } catch (imgError) {
-          console.warn("Error renderizando un bloque del PDF:", imgError);
           pdf.setFillColor(240, 240, 240);
           pdf.rect(blockX, currentY, scaledWidth, scaledHeight, 'F');
           pdf.setTextColor(150, 150, 150);
@@ -157,54 +149,22 @@ export default function ResumenForm() {
         currentY += scaledHeight + (4 * scale); 
       }
 
-      console.log('Guardando archivo PDF...');
       pdf.save('morar.ok_Dictamen.pdf');
-      console.log('PDF guardado localmente.');
 
       // --- 2. GUARDAR DATOS EN LA NUBE ---
-      Toast.fire({ icon: 'info', title: 'Sincronizando con la nube...', timer: 2000 });
       let dbSuccess = false;
       try {
+        console.log("[FIREBASE DEBUG] Iniciando guardado en la nube con imágenes comprimidas en Base64...");
         const userDoc = user?.documento || step1?.cedulaDiligenciador || '000000000';
         const hashCC = CryptoJS.SHA256(String(userDoc).trim()).toString(CryptoJS.enc.Hex);
-        const timestampMs = new Date().getTime();
 
         let step1Updated = { ...(formData.step1 || {}) };
         let step3Updated = { ...(formData.step3 || {}), fisurasList: formData.step3?.fisurasList ? [...formData.step3.fisurasList] : [] };
 
-        try {
-          // Subir Foto Fachada (Base64) si existe
-          if (step1Updated.fotoFachadaUrl && step1Updated.fotoFachadaUrl.startsWith('data:image')) {
-            const fachadaRef = ref(storage, `fotos/${hashCC}/${timestampMs}_fachada.jpg`);
-            await withTimeout(uploadString(fachadaRef, step1Updated.fotoFachadaUrl, 'data_url'), 10000);
-            step1Updated.fotoFachadaUrl = await withTimeout(getDownloadURL(fachadaRef), 5000);
-          }
-
-          // Subir Fotos de Fisuras (Objetos File)
-          for (let i = 0; i < step3Updated.fisurasList.length; i++) {
-            let fisura = { ...step3Updated.fisurasList[i] };
-            
-            if (fisura.foto && fisura.foto instanceof File) {
-              const fisuraRef = ref(storage, `fotos/${hashCC}/${timestampMs}_fisura_${i}.jpg`);
-              await withTimeout(uploadBytes(fisuraRef, fisura.foto), 10000);
-              const downloadUrl = await withTimeout(getDownloadURL(fisuraRef), 5000);
-              
-              fisura.fotoUrl = downloadUrl;
-              if (fisura._raw) {
-                fisura._raw = { ...fisura._raw, fotoUrl: downloadUrl };
-              }
-            }
-            // Eliminar el objeto File en cualquier caso para evitar errores en Firestore
-            delete fisura.foto;
-            step3Updated.fisurasList[i] = fisura;
-          }
-        } catch (storageError) {
-          console.error('Error subiendo fotos a Storage (posible fallo de reglas o CORS):', storageError);
-          Toast.fire({ icon: 'warning', title: 'Las fotos no se pudieron subir a la nube. Guardando solo los datos de texto...' });
-          // Si falla, limpiar los archivos File para que Firestore no crashee
-          for (let i = 0; i < step3Updated.fisurasList.length; i++) {
-            delete step3Updated.fisurasList[i].foto;
-          }
+        // Eliminar los objetos de archivo pesados que no se pueden serializar,
+        // pero MANTENER el Base64 ligero (fotoUrl) que ya viene comprimido.
+        for (let i = 0; i < step3Updated.fisurasList.length; i++) {
+           delete step3Updated.fisurasList[i].foto;
         }
 
         // Guardar el objeto completo en Firestore sanitizando `undefined`
@@ -216,6 +176,7 @@ export default function ResumenForm() {
           step5: formData.step5 || {},
           step6: formData.step6 || {},
         }));
+        console.log("[FIREBASE DEBUG] Datos consolidados listos para Firestore (Base64 incluido).");
 
         const resumenVisual = {
           alerta: {
@@ -250,6 +211,7 @@ export default function ResumenForm() {
           },
           fisuras: fichaCompleta.fisuras.map((f, i) => {
             const col = clasificarFisura(f, fichaCompleta.sistema);
+            const fisuraSubida = step3Updated.fisurasList[i];
             return {
               numero: i + 1,
               elemento: f.elemento,
@@ -259,7 +221,7 @@ export default function ResumenForm() {
               acerosExpuestos: `${f.aceros} (Corrosión: ${f.corrosion})`,
               nivelAlerta: col,
               recomendacion: getRecomendacionFisura(col),
-              fotoUrl: f._raw?.fotoUrl || 'Sin foto'
+              fotoUrl: fisuraSubida?.fotoUrl || 'Sin foto'
             };
           }),
           asentamiento: {
@@ -297,17 +259,13 @@ export default function ResumenForm() {
           resumenVisual,
           ...cleanData
         };
-
-        console.log('Intentando guardar en Firestore...', diagnosticoDoc);
         
         // Guardar en una colección raíz 'diagnosticos' para escalabilidad absoluta
         const diagnosticosRef = collection(db, 'diagnosticos');
         await withTimeout(addDoc(diagnosticosRef, diagnosticoDoc), 15000);
         
-        console.log('Guardado exitoso en Firestore.');
         dbSuccess = true;
       } catch (dbError) {
-        console.error('Error al guardar en Firestore/Storage:', dbError);
         Toast.fire({ icon: 'warning', title: 'Error de conexión a la base de datos. Se generó solo el PDF.' });
       }
 
@@ -317,7 +275,6 @@ export default function ResumenForm() {
         Toast.fire({ icon: 'info', title: 'PDF generado localmente. Hubo un fallo al sincronizar con la nube.' });
       }
     } catch (error) {
-      console.error('Error Crítico Detallado:', error);
       Toast.fire({ icon: 'error', title: 'Error: ' + (error.message || 'Desconocido') });
     } finally {
       setIsGenerating(false);
@@ -365,7 +322,7 @@ export default function ResumenForm() {
   }, [step2, step4, step5, step6, fisurasRaw, instalacionesRaw]);
 
   // 2. Ejecutar motor de cálculo y obtener factores
-  const { valoracion, factores } = useMemo(() => {
+  const { valoracion, factores, debugFicha } = useMemo(() => {
     const val = calcularValoracion(fichaCompleta);
     const facts = [];
     
@@ -395,11 +352,10 @@ export default function ResumenForm() {
 
     if (facts.length === 0) facts.push('No se detectaron fallas estructurales graves ni factores de riesgo inminentes.');
 
-    return { valoracion: val, factores: facts };
+    return { valoracion: val, factores: facts, debugFicha: fichaCompleta };
   }, [fichaCompleta]);
 
-  const { color_final } = valoracion;
-  const styles = getColorStyles(color_final);
+  const styles = getColorStyles(valoracion?.color_final);
   const olorAGas = instalacionesRaw.includes('Olor a gas');
 
   return (
@@ -409,12 +365,6 @@ export default function ResumenForm() {
         <div ref={contentRef} className="space-y-8 bg-white p-2 print:p-0" id="resumen-content">
           <FormHeader />
           
-          {/* DISCLAIMER MOVIDO AL PRINCIPIO */}
-          <div className="mb-6 text-xs leading-relaxed text-justify p-4 rounded-xl border border-slate-200 bg-white text-slate-600 shadow-sm">
-            <strong className="block mb-1 text-sm font-bold text-slate-800">⚠ Aviso importante</strong>
-            Esta valoración es un resultado orientativo, calculado automáticamente a partir de lo registrado en esta ficha (lesiones, asentamientos, suelo y elementos no estructurales). Se basa en criterios generales de clasificación por colores utilizados en evaluaciones rápidas de construcciones (verde / amarillo / naranja / rojo), como una primera aproximación al estado de la edificación.<br/><br/>
-            Este resultado no reemplaza la visita, el análisis detallado mediante ensayos destructivos y no destructivos de acuerdo al sistema constructivo en particular; tampoco constituye estrictamente un estudio de vulnerabilidad sísmica, ni el diagnóstico profesional de un ingeniero o arquitecto habilitado, quien es el único profesional autorizado para determinar oficialmente la habitabilidad de la construcción. No obstante, si usted ha seguido todos los pasos, este es un registro completo que le servirá como primer insumo para un diagnóstico profesional.
-          </div>
 
           {/* BANNER DINÁMICO */}
           <div className={`p-6 md:p-8 rounded-2xl border-l-8 border-y-2 border-r-2 ${styles.border} ${styles.bg} shadow-sm relative`}>
@@ -444,6 +394,13 @@ export default function ResumenForm() {
             <ul className="list-disc list-inside space-y-2 font-medium text-sm md:text-base opacity-90">
               {factores.map((f, i) => <li key={i}>{f}</li>)}
             </ul>
+          </div>
+
+          {/* DISCLAIMER DENTRO DEL BANNER */}
+          <div className="mt-8 text-xs leading-relaxed text-justify p-4 rounded-xl bg-white/60 border border-white/50 text-slate-700 shadow-sm">
+            <strong className="block mb-1 text-sm font-bold text-slate-900">⚠ Aviso importante</strong>
+            Esta valoración es un resultado orientativo, calculado automáticamente a partir de lo registrado en esta ficha (lesiones, asentamientos, suelo y elementos no estructurales). Se basa en criterios generales de clasificación por colores utilizados en evaluaciones rápidas de construcciones (verde / amarillo / naranja / rojo), como una primera aproximación al estado de la edificación.<br/><br/>
+            Este resultado no reemplaza la visita, el análisis detallado mediante ensayos destructivos y no destructivos de acuerdo al sistema constructivo en particular; tampoco constituye estrictamente un estudio de vulnerabilidad sísmica, ni el diagnóstico profesional de un ingeniero o arquitecto habilitado, quien es el único profesional autorizado para determinar oficialmente la habitabilidad de la construcción. No obstante, si usted ha seguido todos los pasos, este es un registro completo que le servirá como primer insumo para un diagnóstico profesional.
           </div>
 
           </div>
@@ -484,14 +441,20 @@ export default function ResumenForm() {
             <div className="mt-6 mb-2">
               <strong className="block text-sm text-gray-500 uppercase tracking-widest mb-3">Ubicación GPS</strong>
               {typeof step1?.latitud === 'number' && typeof step1?.longitud === 'number' && step1.latitud >= -90 && step1.latitud <= 90 ? (
-                <div className="w-full h-48 md:h-64 rounded-xl overflow-hidden border border-gray-200 relative group">
-                  <div className="absolute inset-0 z-10 bg-transparent"></div>
-                  <iframe 
-                    width="100%" 
-                    height="100%" 
-                    style={{ border: 0 }}
-                    src={`https://www.openstreetmap.org/export/embed.html?bbox=${step1.longitud-0.005},${step1.latitud-0.005},${step1.longitud+0.005},${step1.latitud+0.005}&layer=mapnik&marker=${step1.latitud},${step1.longitud}`}
-                  ></iframe>
+                <div className="w-full h-48 md:h-64 rounded-xl overflow-hidden border border-gray-200 relative group bg-slate-50 flex items-center justify-center">
+                  {isGenerating ? (
+                    <div className="text-slate-400 text-sm font-medium italic">Mapa estático para PDF (Lat: {step1.latitud}, Lng: {step1.longitud})</div>
+                  ) : (
+                    <>
+                      <div className="absolute inset-0 z-10 bg-transparent"></div>
+                      <iframe 
+                        width="100%" 
+                        height="100%" 
+                        style={{ border: 0 }}
+                        src={`https://www.openstreetmap.org/export/embed.html?bbox=${step1.longitud-0.005},${step1.latitud-0.005},${step1.longitud+0.005},${step1.latitud+0.005}&layer=mapnik&marker=${step1.latitud},${step1.longitud}`}
+                      ></iframe>
+                    </>
+                  )}
                 </div>
               ) : (
                 <div className="text-sm text-gray-500 italic">No registrada</div>
@@ -610,36 +573,41 @@ export default function ResumenForm() {
         </div>
       </div>
 
-      <div className="fixed bottom-0 left-0 right-0 p-4 bg-white/90 backdrop-blur-md border-t border-slate-200 flex justify-between gap-3 z-50 shadow-[0_-10px_20px_-10px_rgba(0,0,0,0.05)] print:hidden">
-        <CustomButton 
-          variant="outline" 
-          onClick={prevStep}
-          className="px-4 md:px-6 font-bold text-slate-500 border-slate-300 hover:bg-slate-50"
-        >
-          Atrás
-        </CustomButton>
-
-        <div className="flex-1 flex gap-2 md:gap-3 justify-end">
+      <div className="fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-md border-t border-slate-200 z-50 shadow-[0_-10px_20px_-10px_rgba(0,0,0,0.05)] print:hidden flex flex-col">
+        <div className="flex justify-between gap-3 p-4">
           <CustomButton 
-            variant="primary"
-            onClick={async () => {
-              await handleDownloadPDF();
-              Toast.fire({ icon: 'success', title: 'Dictamen guardado y exportado exitosamente' });
-              resetDiagnostico();
-            }}
-            disabled={isGenerating}
-            className="font-bold px-4 md:px-8 shadow-md text-sm md:text-base bg-[#1F3B5F] hover:bg-[#152a45] text-white"
+            variant="outline" 
+            onClick={prevStep}
+            className="px-4 md:px-6 font-bold text-slate-500 border-slate-300 hover:bg-slate-50"
           >
-            {isGenerating ? (
-              <svg className="animate-spin -ml-1 mr-2 h-4 w-4 md:h-5 md:w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-              </svg>
-            ) : (
-              <svg className="w-4 h-4 md:w-5 md:h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
-            )}
-            {isGenerating ? 'GENERANDO...' : 'GUARDAR Y EXPORTAR PDF'}
+            Atrás
           </CustomButton>
+
+          <div className="flex-1 flex gap-2 md:gap-3 justify-end">
+            <CustomButton 
+              variant="primary"
+              onClick={async () => {
+                await handleDownloadPDF();
+                resetDiagnostico();
+              }}
+              disabled={isGenerating}
+              className="font-bold px-4 md:px-8 shadow-md text-sm md:text-base bg-[#1F3B5F] hover:bg-[#152a45] text-white"
+            >
+              {isGenerating ? (
+                <svg className="animate-spin -ml-1 mr-2 h-4 w-4 md:h-5 md:w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+              ) : (
+                <svg className="w-4 h-4 md:w-5 md:h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
+              )}
+              {isGenerating ? 'GUARDANDO DATOS...' : 'GUARDAR Y EXPORTAR PDF'}
+            </CustomButton>
+          </div>
+        </div>
+        <div className="pointer-events-none flex items-center justify-center gap-2 text-center text-[10px] sm:text-xs text-slate-400 font-medium uppercase tracking-widest w-full opacity-90 pb-3">
+          <img src="/contro.ico" alt="Controller Logo" className="w-4 h-4 object-contain opacity-80" />
+          <span>Producto desarrollado por Controller</span>
         </div>
       </div>
       {/* COMPONENTE OCULTO PARA GENERAR EL PDF FORMAL (A4) */}

@@ -14,8 +14,7 @@ apiClient.interceptors.request.use(async (config) => {
       // Usaremos false de forma predeterminada en peticiones estándar para optimizar ancho de banda.
       const token = await auth.currentUser.getIdToken(false);
       config.headers.Authorization = `Bearer ${token}`;
-    } catch (error) {
-      console.error('Error inyectando el token de Firebase:', error);
+      // Error inyectando token
     }
   }
   return config;
@@ -40,8 +39,6 @@ apiClient.interceptors.response.use(
         
         // Exponential backoff: Base 500ms * 2^retryCount + jitter (aleatorio para desincronizar peticiones masivas)
         const backoffTime = (Math.pow(2, config.retryCount) * 500) + Math.random() * 200;
-        
-        console.warn(`[API] Tráfico alto. Reintentando petición ${config.url} (Intento ${config.retryCount}/3) en ${Math.round(backoffTime)}ms...`);
         
         // Esperar el tiempo de backoff
         await new Promise((resolve) => setTimeout(resolve, backoffTime));

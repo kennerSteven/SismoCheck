@@ -20,9 +20,8 @@ const useFormStore = create(
       setFooterHidden: (hidden) => set({ isFooterHidden: hidden }),
       setFormData: (step, data) => 
         set((state) => {
-          console.log(`\n=== DATOS CAPTURADOS: ${step.toUpperCase()} ===`);
-          console.log(data);
-          console.log('===================================\n');
+          console.log(`[FormStore DEBUG] Guardando datos para la fase: ${step}`);
+          console.log(`[FormStore DEBUG] Datos capturados:`, data);
           return {
             formData: {
               ...state.formData,
@@ -55,7 +54,7 @@ const useFormStore = create(
             ancho: "10",
             largo: "20",
             anoConstruccion: "2005",
-            fotoFachadaUrl: "https://picsum.photos/seed/fachada/400/300",
+            fotoFachadaUrl: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=",
             latitud: 4.60971,
             longitud: -74.08175
           },
@@ -71,45 +70,45 @@ const useFormStore = create(
                 id: "test1",
                 elemento: "columna",
                 tipo: "diagonal_cortante",
-                tamano: "severo",
-                evolucion: "aumento_notorio",
+                tamano: "w4",
+                evolucion: "lento",
                 aceros: "Sí",
                 corrosion: "No",
-                fotoUrl: "https://picsum.photos/seed/fisura1/400/300",
-                _raw: { tipo: "diagonal_cortante", fotoUrl: "https://picsum.photos/seed/fisura1/400/300" }
+                fotoUrl: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=",
+                _raw: { tipo: "diagonal_cortante", fotoUrl: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=" }
               },
               {
                 id: "test2",
-                elemento: "muro",
-                tipo: "x_cortante",
-                tamano: "moderado",
-                evolucion: "sin_cambios",
+                elemento: "Muro",
+                tipo: "cruzadas",
+                tamano: "w3",
+                evolucion: "igual",
                 aceros: "No",
                 corrosion: "No",
-                fotoUrl: "https://picsum.photos/seed/fisura2/400/300",
-                _raw: { tipo: "x_cortante", fotoUrl: "https://picsum.photos/seed/fisura2/400/300" }
+                fotoUrl: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=",
+                _raw: { tipo: "cruzadas", fotoUrl: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=" }
               },
               {
                 id: "test3",
-                elemento: "viga",
-                tipo: "vertical_flexion",
-                tamano: "leve",
-                evolucion: "sin_cambios",
+                elemento: "Viga",
+                tipo: "vertical",
+                tamano: "w2",
+                evolucion: "igual",
                 aceros: "Sí",
                 corrosion: "Sí",
-                fotoUrl: "https://picsum.photos/seed/fisura3/400/300",
-                _raw: { tipo: "vertical_flexion", fotoUrl: "https://picsum.photos/seed/fisura3/400/300" }
+                fotoUrl: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=",
+                _raw: { tipo: "vertical", fotoUrl: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=" }
               },
               {
                 id: "test4",
-                elemento: "losa",
-                tipo: "paralela",
-                tamano: "severo",
-                evolucion: "aumento_notorio",
+                elemento: "Piso",
+                tipo: "escalonada",
+                tamano: "w5",
+                evolucion: "notorio",
                 aceros: "No",
                 corrosion: "No",
-                fotoUrl: "https://picsum.photos/seed/fisura4/400/300",
-                _raw: { tipo: "paralela", fotoUrl: "https://picsum.photos/seed/fisura4/400/300" }
+                fotoUrl: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=",
+                _raw: { tipo: "escalonada", fotoUrl: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=" }
               }
             ]
           },

@@ -6,7 +6,6 @@ let isAuthenticating = false;
 
 export const loginWithCedula = async (cedula) => {
   if (isAuthenticating) {
-    console.warn("[Auth] Autenticación en progreso.");
     return null;
   }
   
@@ -19,7 +18,6 @@ export const loginWithCedula = async (cedula) => {
     const token = await userCredential.user.getIdToken(true);
     return { user: userCredential.user, token };
   } catch (error) {
-    console.error("[Auth] Error en login:", error);
     throw error;
   } finally {
     isAuthenticating = false;
@@ -48,7 +46,6 @@ export const registerWithCedula = async (nombre, cedula) => {
     const token = await userCredential.user.getIdToken(true);
     return { user: userCredential.user, token };
   } catch (error) {
-    console.error("[Auth] Error en registro:", error);
     throw error;
   } finally {
     isAuthenticating = false;
@@ -65,7 +62,6 @@ export const loginWithGoogle = async () => {
     const token = await userCredential.user.getIdToken(true);
     return { user: userCredential.user, token };
   } catch (error) {
-    console.error("[Auth] Error en loginWithGoogle:", error);
     throw error;
   } finally {
     isAuthenticating = false;

@@ -1,0 +1,172 @@
+ÍNDICE DE IMÁGENES — Ficha MORAR.OK
+==================================================
+
+
+01_Sistema_constructivo/
+  - estructura_metalica__Estructura metálica.jpg
+  - madera_pesada__Madera pesada.jpg
+  - mamp_confinada__Mampostería confinada.jpg
+  - mamp_estructural__Mampostería estructural (reforzada).jpg
+  - mamp_no_reforzada__Mampostería no reforzada o simple.jpg
+  - muros_carga_concreto__Muros de carga en concreto.jpg
+  - otro__Otro - no sé identificar - mixto.jpg
+  - palafitica__Construcción palafítica.jpg
+  - prefab__Construcción prefabricada.jpg
+  - tradicional__Construcción tradicional (bahareque, tapia pisada, adobe, guadua).jpg
+
+02_Tipo_cubierta/
+  - barro__Teja de barro.jpg
+  - lisa__Cubierta lisa.jpg
+  - liviana__Cubierta liviana o teja de zinc.jpg
+  - organico__Techo orgánico.jpg
+
+03_Evaluacion_suelo/
+  - caida_rocas__Caída de rocas.jpg
+  - cimentacion_expuesta__Cimentación expuesta.jpg
+  - deslizamiento__Deslizamiento de tierras.jpg
+  - licuefaccion__Licuefacción.jpg
+
+04_Asentamiento/
+  - diferencial__Asentamiento diferencial (un lado baja más que el otro).jpg
+  - inclinacion__Inclinación general de toda la construcción (inclinación muy notoria).jpg
+  - localizado__Hundimiento localizado (una sola zona, esquina o columna dentro de la construcción).jpg
+  - uniforme__Asentamiento uniforme (parejo).jpg
+
+05_Fisuras_concreto_por_elemento/
+  - Columna/diagonal.jpg
+  - Columna/escalonada.jpg
+  - Columna/horizontal.jpg
+  - Columna/mapa.jpg
+  - Columna/revoque.jpg
+  - Columna/vertical.jpg
+  - Columna/x_cruzada.jpg
+  - Escaleras/diagonal.jpg
+  - Escaleras/escalonada.jpg
+  - Escaleras/horizontal.jpg
+  - Escaleras/mapa.jpg
+  - Escaleras/revoque.jpg
+  - Escaleras/vertical.jpg
+  - Escaleras/x_cruzada.jpg
+  - Muro/diagonal.jpg
+  - Muro/escalonada.jpg
+  - Muro/horizontal.jpg
+  - Muro/mapa.jpg
+  - Muro/revoque.jpg
+  - Muro/vertical.jpg
+  - Muro/x_cruzada.jpg
+  - Piso/diagonal.jpg
+  - Piso/escalonada.jpg
+  - Piso/horizontal.jpg
+  - Piso/mapa.jpg
+  - Piso/revoque.jpg
+  - Piso/vertical.jpg
+  - Piso/x_cruzada.jpg
+  - Techo/diagonal.jpg
+  - Techo/escalonada.jpg
+  - Techo/horizontal.jpg
+  - Techo/mapa.jpg
+  - Techo/revoque.jpg
+  - Techo/vertical.jpg
+  - Techo/x_cruzada.jpg
+  - Viga/diagonal.jpg
+  - Viga/escalonada.jpg
+  - Viga/horizontal.jpg
+  - Viga/mapa.jpg
+  - Viga/revoque.jpg
+  - Viga/vertical.jpg
+  - Viga/x_cruzada.jpg
+
+06_Fisuras_madera_por_elemento/
+  - Columna/fisura_diagonal_madera.jpg
+  - Columna/fisura_horizontal_madera.jpg
+  - Columna/hueco.jpg
+  - Columna/rajadura.jpg
+  - Columna/torcedura_madera.jpg
+  - Muro/fisura_diagonal_madera.jpg
+  - Muro/fisura_horizontal_madera.jpg
+  - Muro/hueco.jpg
+  - Muro/rajadura.jpg
+  - Muro/torcedura_madera.jpg
+  - Piso/fisura_diagonal_madera.jpg
+  - Piso/fisura_horizontal_madera.jpg
+  - Piso/hueco.jpg
+  - Piso/rajadura.jpg
+  - Piso/torcedura_madera.jpg
+  - Techo/fisura_diagonal_madera.jpg
+  - Techo/fisura_horizontal_madera.jpg
+  - Techo/hueco.jpg
+  - Techo/rajadura.jpg
+  - Techo/torcedura_madera.jpg
+  - Viga/fisura_diagonal_madera.jpg
+  - Viga/fisura_horizontal_madera.jpg
+  - Viga/hueco.jpg
+  - Viga/rajadura.jpg
+  - Viga/torcedura_madera.jpg
+
+07_Fisuras_metal_por_elemento/
+  - Columna/abolladura.jpg
+  - Columna/corrosion_metal.jpg
+  - Columna/desplome.jpg
+  - Columna/falla_uniones.jpg
+  - Columna/separacion_piso_techo.jpg
+  - Columna/torcedura_metal.jpg
+  - Muro/abolladura.jpg
+  - Muro/corrosion_metal.jpg
+  - Muro/desplome.jpg
+  - Muro/falla_uniones.jpg
+  - Muro/separacion_piso_techo.jpg
+  - Muro/torcedura_metal.jpg
+  - Techo/abolladura.jpg
+  - Techo/corrosion_metal.jpg
+  - Techo/desplome.jpg
+  - Techo/falla_uniones.jpg
+  - Techo/separacion_piso_techo.jpg
+  - Techo/torcedura_metal.jpg
+  - Viga/abolladura.jpg
+  - Viga/corrosion_metal.jpg
+  - Viga/desplome.jpg
+  - Viga/falla_uniones.jpg
+  - Viga/separacion_piso_techo.jpg
+  - Viga/torcedura_metal.jpg
+
+08_Fisuras_concreto_generico/
+  - diagonal__Lesión diagonal.jpg
+  - escalonada__Lesión escalonada.jpg
+  - horizontal__Lesión horizontal.jpg
+  - mapa__Lesiones tipo telaraña.jpg
+  - revoque__Grieta solo en el pañete o el acabado.jpg
+  - vertical__Lesión vertical.jpg
+  - x_cruzada__Lesiones cruzadas (en X).jpg
+
+09_Fisuras_madera_generico/
+  - fisura_diagonal_madera__Lesión diagonal (cortante).jpg
+  - fisura_horizontal_madera__Lesión horizontal (cortante).jpg
+  - hueco__Hueco.jpg
+  - rajadura__Rajadura.jpg
+  - torcedura_madera__Torcedura.jpg
+
+10_Fisuras_metal_generico/
+  - abolladura__Abolladura.jpg
+  - corrosion_metal__Corrosión (óxido).jpg
+  - desplome__Desplome.jpg
+  - falla_uniones__Falla en uniones o soldaduras.jpg
+  - separacion_piso_techo__Separación piso-techo.jpg
+  - torcedura_metal__Torcedura.jpg
+
+11_Fisuras_prefab/
+  - separacion_paneles__Separación entre paneles.svg
+
+12_Logos/
+  - Logo_Controller.png
+  - Logo_MorarOK.png
+  - Logo_NM_Arquitectos.png
+  - Logo_Qatro.png
+
+13_Alerta_colapso/
+  - ejemplo_1.jpg
+  - ejemplo_2.jpg
+  - ejemplo_3.jpg
+  - ejemplo_4.jpg
+
+
+TOTAL: 140 imágenes

@@ -33,3 +33,40 @@ export const DangerConfirmModal = Swal.mixin({
   },
   buttonsStyling: false
 });
+
+export const handleFormError = (errors) => {
+  const firstErrorKey = Object.keys(errors)[0];
+  if (firstErrorKey) {
+    Toast.fire({ icon: 'warning', title: 'Por favor, completa los campos requeridos.' });
+    
+    // Attempt to find the DOM element by name attribute first
+    let errorElement = document.querySelector(`[name="${firstErrorKey}"]`);
+    
+    // If not found, try by ID (useful for custom components like radio groups)
+    if (!errorElement) {
+      errorElement = document.getElementById(firstErrorKey);
+    }
+    
+    // Special fallback for fields inside specific containers
+    if (!errorElement) {
+      // Sometimes the error key might be nested (e.g. 'address.city')
+      errorElement = document.querySelector(`[name="${firstErrorKey.replace('.', '\\.')}"]`);
+    }
+
+    if (errorElement) {
+      errorElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      // Optional: Add a brief highlight effect
+      errorElement.classList.add('ring-2', 'ring-red-500', 'ring-offset-2');
+      setTimeout(() => {
+        errorElement.classList.remove('ring-2', 'ring-red-500', 'ring-offset-2');
+      }, 2000);
+    } else {
+      // If we completely fail to find the specific field, scroll to the top of the form container
+      const scrollContainer = document.getElementById('scroll-container') || document.querySelector('main > div > div');
+      if (scrollContainer) {
+        scrollContainer.scrollTo({ top: 0, behavior: 'smooth' });
+      }
+    }
+  }
+};
+

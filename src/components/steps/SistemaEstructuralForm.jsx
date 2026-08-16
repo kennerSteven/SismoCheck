@@ -3,6 +3,7 @@ import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import useFormStore from '../../store/useFormStore';
+import { handleFormError } from '../../utils/alerts';
 
 import { CONSTRUCCION_OPTIONS, CUBIERTA_OPTIONS } from '../../constants/sistemaEstructuralData';
 
@@ -81,7 +82,7 @@ export default function SistemaEstructuralForm({ onNext }) {
   };
 
   return (
-    <form id="step-form" onSubmit={handleSubmit(onSubmit)} className="w-full text-slate-700">
+    <form id="step-form" onSubmit={handleSubmit(onSubmit, handleFormError)} className="w-full text-slate-700">
       
       {/* SECCIÓN 1: Construcción */}
       <div className="mb-10">
