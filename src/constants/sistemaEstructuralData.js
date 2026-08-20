@@ -8,8 +8,15 @@ import imgConstPrefab from '../assets/fotos/01_Sistema_constructivo/prefab__Cons
 import imgMaderaPesada from '../assets/fotos/01_Sistema_constructivo/madera_pesada__Madera pesada.jpg';
 import imgEstMetalica from '../assets/fotos/01_Sistema_constructivo/estructura_metalica__Estructura metálica.jpg';
 import imgOtroMixto from '../assets/fotos/01_Sistema_constructivo/otro__Otro - no sé identificar - mixto.jpg';
+import imgAporticadoConcreto from '../assets/fotos/Sistema aporticado de concreto.jpeg';
 
 export const CONSTRUCCION_OPTIONS = {
+  porticos_concreto: {
+    id: 'porticos_concreto',
+    titulo: 'Sistema aporticado de concreto',
+    descripcion: 'Paredes gruesas y continuas de concreto, sin columnas independientes a la vista.',
+    imageSrc: imgAporticadoConcreto
+  },
   muros_concreto: {
     id: 'muros_concreto',
     titulo: 'Muros de carga en concreto',

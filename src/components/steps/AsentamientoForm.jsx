@@ -50,12 +50,21 @@ const OPTIONS = [
 
 const asentamientoSchema = z.object({
   realizoPruebaCanica: z.string().min(1, "Seleccione una opción"),
+  rapidezCanica: z.string().optional(),
   realizoPruebaPlomada: z.string().min(1, "Seleccione una opción"),
   uniforme: z.string().min(1, "Seleccione una opción"),
   diferencial: z.string().min(1, "Seleccione una opción"),
   inclinacion: z.string().min(1, "Seleccione una opción"),
   localizado: z.string().min(1, "Seleccione una opción"),
   observacionesAsentamiento: z.string().optional().or(z.literal('')),
+}).superRefine((data, ctx) => {
+  if (data.realizoPruebaCanica === 'si' && !data.rapidezCanica) {
+    ctx.addIssue({
+      path: ['rapidezCanica'],
+      code: z.ZodIssueCode.custom,
+      message: 'Seleccione una opción'
+    });
+  }
 });
 
 export default function AsentamientoForm({ onNext }) {
@@ -63,6 +72,7 @@ export default function AsentamientoForm({ onNext }) {
 
   const defaultValues = {
     realizoPruebaCanica: formData.step4?.realizoPruebaCanica || '',
+    rapidezCanica: formData.step4?.rapidezCanica || '',
     realizoPruebaPlomada: formData.step4?.realizoPruebaPlomada || '',
     uniforme: formData.step4?.uniforme || '',
     diferencial: formData.step4?.diferencial || '',
@@ -71,10 +81,12 @@ export default function AsentamientoForm({ onNext }) {
     observacionesAsentamiento: formData.step4?.observacionesAsentamiento || '',
   };
 
-  const { register, handleSubmit, formState: { errors } } = useForm({
+  const { register, handleSubmit, watch, formState: { errors } } = useForm({
     resolver: zodResolver(asentamientoSchema),
     defaultValues
   });
+  
+  const realizoPruebaCanicaValue = watch('realizoPruebaCanica');
 
   const onSubmit = (data) => {
     setFormData('step4', data);
@@ -140,6 +152,33 @@ export default function AsentamientoForm({ onNext }) {
                 <option value="si">Sí, la realicé</option>
               </select>
               {errors.realizoPruebaCanica && <span className="text-red-500 text-xs mt-2 block font-bold">{errors.realizoPruebaCanica.message}</span>}
+              
+              {realizoPruebaCanicaValue === 'si' && (
+                <div className="mt-4 pt-4 border-t border-slate-200">
+                  <label className="block text-[10px] md:text-xs font-mono font-bold text-slate-500 uppercase tracking-tight mb-2 leading-tight">
+                    ¿QUÉ TAN RÁPIDO SE MOVIÓ LA CANICA?
+                  </label>
+                  <select
+                    className={`w-full px-4 py-3 rounded-xl border-2 bg-white text-slate-800 text-sm font-medium focus:outline-none transition-colors appearance-none ${
+                      errors.rapidezCanica ? 'border-red-400 focus:border-red-500 bg-red-50' : 'border-slate-200 hover:border-slate-300 focus:border-[#1F3B5F]'
+                    }`}
+                    style={{
+                      backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%23334155' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e")`,
+                      backgroundPosition: 'right 1rem center',
+                      backgroundRepeat: 'no-repeat',
+                      backgroundSize: '1.25em 1.25em',
+                      paddingRight: '2.5rem'
+                    }}
+                    {...register('rapidezCanica')}
+                  >
+                    <option value="">Seleccione...</option>
+                    <option value="quieta">No se movió, quedó quieta</option>
+                    <option value="lento">Se movió lento</option>
+                    <option value="rapido">Se movió rápido</option>
+                  </select>
+                  {errors.rapidezCanica && <span className="text-red-500 text-xs mt-2 block font-bold">{errors.rapidezCanica.message}</span>}
+                </div>
+              )}
             </div>
           </div>
         </div>

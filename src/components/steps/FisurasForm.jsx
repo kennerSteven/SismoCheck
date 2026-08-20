@@ -12,6 +12,22 @@ const allImages = Object.fromEntries(
   Object.entries(imageModules).map(([path, mod]) => [path, mod.default || mod])
 );
 
+import imgMetal1 from '../../assets/EscalerasImg/separacion piso techo .jpeg';
+import imgMetal2 from '../../assets/EscalerasImg/falla en uniones de soldadura .jpeg';
+import imgMetal3 from '../../assets/EscalerasImg/corrosion oxido.jpeg';
+import imgMetal4 from '../../assets/EscalerasImg/desplome.jpeg';
+import imgMetal5 from '../../assets/EscalerasImg/Abolladura.jpeg';
+import imgMetal6 from '../../assets/EscalerasImg/torcedura.png';
+
+const metalImagesMap = {
+  torcedura_metal: imgMetal6,
+  corrosion_metal: imgMetal3,
+  abolladura: imgMetal5,
+  desplome: imgMetal4,
+  separacion_piso_techo: imgMetal1,
+  falla_uniones: imgMetal2
+};
+
 // --- FUNCIONES DE GRUPO ---
 const getSistemaGrupo = (tipoConstruccion) => {
   if (['construccion_tradicional', 'construccion_palafitica', 'madera_portante'].includes(tipoConstruccion)) return 'madera';
@@ -125,6 +141,12 @@ const getTipoList = (grupo, elementoId) => {
 };
 
 const getFisuraImage = (grupo, elementoId, tipoMatch) => {
+  if (grupo === 'metal' && elementoId !== 'Muro' && elementoId !== 'Piso') {
+    if (metalImagesMap[tipoMatch]) {
+      return metalImagesMap[tipoMatch];
+    }
+  }
+
   let isPrefab = false;
   if (grupo === 'prefab') {
     isPrefab = true;
@@ -212,7 +234,16 @@ export default function FisurasForm({ onNext }) {
   }, [tipoPisoTierra]);
 
   const tipoOptions = useMemo(() => {
-    return getTipoList(grupoEstructural, tempFisura.elemento);
+    let options = getTipoList(grupoEstructural, tempFisura.elemento);
+    if (grupoEstructural === 'concreto' || grupoEstructural === 'prefab' || (grupoEstructural === 'metal' && (tempFisura.elemento === 'Muro' || tempFisura.elemento === 'Piso'))) {
+      if (tempFisura.elemento === 'Piso') {
+        options = options.filter(o => o.id !== 'vertical');
+      }
+      if (tempFisura.elemento === 'Columna' || tempFisura.elemento === 'Viga') {
+        options = options.filter(o => o.id !== 'escalonada');
+      }
+    }
+    return options;
   }, [grupoEstructural, tempFisura.elemento]);
 
   const { handleSubmit } = useForm({

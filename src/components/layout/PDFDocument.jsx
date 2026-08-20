@@ -3,6 +3,8 @@ import { getColorStyles, getFisuraLabel, getRecomendacionFisura, clasificarFisur
 import logoUrl from '../../assets/contro.ico';
 import qatroLogoUrl from '../../assets/Qatro.png';
 import nmLogoUrl from '../../assets/NM.png';
+import logoAscolpat from '../../assets/LogosPDF/ASCOLPAT.png';
+import logoUnigranadinos from '../../assets/LogosPDF/UNIGRANADINOS.png';
 
 const StaticTileMap = ({ lat, lon, zoom }) => {
   // Slippy Map math
@@ -22,7 +24,7 @@ const StaticTileMap = ({ lat, lon, zoom }) => {
   // The container is 100% width/height. We'll make the grid 3x3 tiles (768x768px).
   // The exact coordinate inside the 768x768 grid is at (256 + px, 256 + py).
   // We offset the grid by - (256 + px) and - (256 + py) plus 50% of the container to center it.
-  
+
   const tiles = [];
   for (let dy = -1; dy <= 1; dy++) {
     for (let dx = -1; dx <= 1; dx++) {
@@ -32,19 +34,19 @@ const StaticTileMap = ({ lat, lon, zoom }) => {
 
   return (
     <div className="absolute inset-0 z-10 bg-[#AAD3DF] pointer-events-none" style={{ overflow: 'hidden' }}>
-      <div 
-        className="absolute" 
-        style={{ 
-          width: '768px', height: '768px', 
-          top: '50%', left: '50%', 
-          transform: `translate(calc(-50% - ${px}px + 128px), calc(-50% - ${py}px + 128px))` 
+      <div
+        className="absolute"
+        style={{
+          width: '768px', height: '768px',
+          top: '50%', left: '50%',
+          transform: `translate(calc(-50% - ${px}px + 128px), calc(-50% - ${py}px + 128px))`
         }}
       >
         {tiles.map((t, index) => {
           const col = index % 3;
           const row = Math.floor(index / 3);
           return (
-            <img 
+            <img
               key={t.key}
               src={`https://tile.openstreetmap.org/${zoom}/${t.x}/${t.y}.png`}
               crossOrigin="anonymous"
@@ -281,6 +283,15 @@ export const PDFDocument = React.forwardRef(({
             <span className="text-[9px] text-slate-400 mt-3 italic leading-tight">Esta clasificación es preliminar y requiere validación en sitio por un experto.</span>
           </div>
         </Section>
+
+        {/* METODOLOGÍA AVALADA POR */}
+        <div className="flex flex-col items-center justify-center mt-4 mb-2 pdf-block">
+          <span className="text-[10px] font-black uppercase mb-1 tracking-widest text-slate-500">Metodología avalada por:</span>
+          <div className="flex items-center gap-16 justify-center">
+            <img src={logoAscolpat} alt="ASCOLPAT" className="h-48 scale-125 translate-y-6 object-contain drop-shadow-sm" />
+            <img src={logoUnigranadinos} alt="UNIGRANADINOS" className="h-24 object-contain drop-shadow-sm" />
+          </div>
+        </div>
 
         {/* Page break before EVIDENCIA */}
         <div className="html2pdf__page-break"></div>
