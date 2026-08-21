@@ -116,18 +116,24 @@ export const PDFDocument = React.forwardRef(({
 
         {/* HEADER MODERNO */}
         <div className="flex items-center justify-between bg-white rounded-2xl p-6 border border-slate-200 shadow-sm mb-6 pdf-block">
-          <div className="flex gap-6 items-center">
-            <img src={logoUrl} alt="Controller" className="h-14 object-contain drop-shadow-sm" />
-            <div className="w-px h-12 bg-slate-200"></div>
-            <img src={qatroLogoUrl} alt="Qatro" className="h-16 object-contain drop-shadow-sm" />
-            <div className="w-px h-12 bg-slate-200"></div>
-            <img src={nmLogoUrl} alt="NM" className="h-14 object-contain drop-shadow-sm" />
+          <div className="flex gap-8 items-center">
+            <div className="flex items-center gap-3">
+              <img src={logoUrl} alt="Controller" className="h-14 object-contain drop-shadow-sm" />
+              <div className="flex flex-col text-left">
+                <span className="font-black text-[#1F3B5F] text-[1.4rem] leading-none tracking-tight">Controller</span>
+                <span className="font-bold text-slate-400 text-[0.7rem] tracking-widest uppercase mt-0.5">R.M.A SAS</span>
+              </div>
+            </div>
+            <div className="w-px h-16 bg-slate-200"></div>
+            <img src={qatroLogoUrl} alt="Qatro" className="h-16 object-contain drop-shadow-sm scale-125" />
+            <div className="w-px h-16 bg-slate-200"></div>
+            <img src={nmLogoUrl} alt="NM" className="h-16 object-contain drop-shadow-sm scale-110" />
           </div>
-          <div className="flex-1 ml-8 text-right">
-            <h1 className="text-xl font-black text-[#1F3B5F] uppercase tracking-tight leading-tight">
+          <div className="flex-1 ml-6 text-right">
+            <h1 className="text-[1.2rem] font-black text-[#1F3B5F] uppercase tracking-tight leading-tight">
               DICTAMEN TÉCNICO DE<br />INSPECCIÓN POST-SISMO
             </h1>
-            <div className="mt-2 inline-block bg-slate-100 text-slate-600 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider">
+            <div className="mt-2 inline-block bg-[#F1F5F9] text-[#475569] px-4 py-1.5 rounded-full text-[0.7rem] font-bold uppercase tracking-widest">
               {new Date().toLocaleDateString('es-CO', { year: 'numeric', month: 'long', day: 'numeric' })}
             </div>
           </div>

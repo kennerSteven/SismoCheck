@@ -7,6 +7,7 @@ import useFormStore from '../../store/useFormStore';
 
 export default function FormHeader() {
   const logout = useFormStore(state => state.logout);
+  const fillTestData = useFormStore(state => state.fillTestData);
   const currentDate = new Date().toLocaleDateString('es-ES', { 
     day: 'numeric', 
     month: 'long', 
@@ -50,7 +51,14 @@ export default function FormHeader() {
         </h3>
         
         <div className="relative flex items-center gap-2">
-
+          <button 
+            type="button" 
+            onClick={fillTestData}
+            className="px-3 py-1.5 bg-blue-100 text-blue-700 text-xs font-bold rounded-md hover:bg-blue-200 transition-colors shadow-sm hidden md:block border border-blue-200"
+            title="Llenar datos de prueba"
+          >
+            DATA TEST
+          </button>
           <span className="font-mono text-sm sm:text-base font-medium px-4 py-1.5 bg-slate-100 rounded-md border border-slate-200">
             {currentDate}
           </span>
